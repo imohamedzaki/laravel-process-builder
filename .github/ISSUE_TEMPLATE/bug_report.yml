@@ -1,0 +1,75 @@
+name: Bug report
+description: Report a problem with Laravel Process Builder
+labels: ["bug", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to file a bug report. Please fill in as much detail as you can.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: What happened? What did you expect to happen instead?
+    validations:
+      required: true
+
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+      description: Minimal steps to reproduce the issue. Include a process definition JSON if relevant.
+      placeholder: |
+        1. Set `PROCESS_BUILDER_GENERATION_ENABLED=true`
+        2. Run `php artisan process-builder:generate my-process`
+        3. ...
+    validations:
+      required: true
+
+  - type: input
+    id: package-version
+    attributes:
+      label: Package version
+      placeholder: e.g. 0.1.0 or commit SHA
+    validations:
+      required: true
+
+  - type: input
+    id: php-version
+    attributes:
+      label: PHP version
+      placeholder: e.g. 8.3.4
+    validations:
+      required: true
+
+  - type: input
+    id: laravel-version
+    attributes:
+      label: Laravel version
+      placeholder: e.g. 12.4.0
+    validations:
+      required: true
+
+  - type: textarea
+    id: config
+    attributes:
+      label: Relevant configuration
+      description: Any `config/process-builder.php` values that differ from defaults, and relevant `.env` flags (redact secrets).
+      render: php
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs / stack trace
+      render: shell
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checklist
+      options:
+        - label: I searched existing issues and this hasn't been reported already.
+          required: true
+        - label: This is not a security vulnerability (if it is, see SECURITY.md instead).
+          required: true

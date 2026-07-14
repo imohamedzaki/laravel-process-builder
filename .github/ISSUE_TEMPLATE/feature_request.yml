@@ -1,0 +1,39 @@
+name: Feature request
+description: Suggest an enhancement or new capability
+labels: ["enhancement", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Before requesting a feature, please check [docs/roadmap.md](../../blob/main/docs/roadmap.md) —
+        it may already be planned, and check the Non-Goals list — some things (an execution engine,
+        arbitrary PHP execution, writes to non-managed files) are intentionally out of scope.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem does this solve?
+      description: Describe the problem or limitation you're running into, not just the solution.
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: How would you like this to work?
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checklist
+      options:
+        - label: I checked the roadmap and this isn't already planned or explicitly a non-goal.
+          required: true
