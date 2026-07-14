@@ -1,0 +1,17 @@
+laravel: workbench
+
+providers:
+  - MohamedZaki\LaravelProcessBuilder\LaravelProcessBuilderServiceProvider
+  - Workbench\App\Providers\WorkbenchServiceProvider
+
+workbench:
+  start: '/process-builder'
+  install: true
+  discovers:
+    web: true
+    api: false
+    commands: false
+    components: false
+    views: true
+  build:
+    - asset-publish

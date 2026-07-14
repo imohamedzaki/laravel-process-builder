@@ -1,0 +1,98 @@
+:root {
+    color-scheme: light dark;
+    --pb-bg: #0f172a;
+    --pb-surface: #111827;
+    --pb-border: #1f2937;
+    --pb-text: #e5e7eb;
+    --pb-accent: #6366f1;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--pb-bg);
+    color: var(--pb-text);
+}
+
+.pb-shell {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+.pb-topbar {
+    display: flex;
+    align-items: baseline;
+    gap: 0.75rem;
+    padding: 0.75rem 1.25rem;
+    background: var(--pb-surface);
+    border-bottom: 1px solid var(--pb-border);
+}
+
+.pb-logo {
+    font-weight: 600;
+    font-size: 1.1rem;
+}
+
+.pb-tagline {
+    color: #9ca3af;
+    font-size: 0.85rem;
+}
+
+.pb-main {
+    padding: 2rem;
+}
+
+.pb-explorer {
+    padding: 0 2rem 2rem;
+}
+
+.pb-explorer-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+}
+
+.pb-explorer-stats {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 1rem;
+    margin: 0 0 1rem;
+}
+
+.pb-explorer-stats div {
+    background: var(--pb-surface);
+    border: 1px solid var(--pb-border);
+    border-radius: 0.5rem;
+    padding: 0.75rem 1rem;
+}
+
+.pb-explorer-stats dt {
+    color: #9ca3af;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+}
+
+.pb-explorer-stats dd {
+    margin: 0.25rem 0 0;
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
+.pb-explorer-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+}
+
+.pb-explorer-table th,
+.pb-explorer-table td {
+    text-align: left;
+    padding: 0.5rem 0.75rem;
+    border-bottom: 1px solid var(--pb-border);
+}
