@@ -1,0 +1,18 @@
+{
+    "schemaVersion": "1.0",
+    "id": "4D71A61FF76A962D17F1F1A1C4",
+    "name": "Create Order",
+    "slug": "create-order",
+    "description": null,
+    "version": 1,
+    "status": "draft",
+    "entryNodeId": null,
+    "nodes": [],
+    "edges": [],
+    "metadata": {
+        "createdAt": "2026-07-14T13:32:59+00:00",
+        "updatedAt": "2026-07-14T13:32:59+00:00",
+        "generatedAt": null,
+        "generatorVersion": null
+    }
+}
