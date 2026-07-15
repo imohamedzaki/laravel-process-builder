@@ -42,6 +42,7 @@ final class ProcessCrudEndpointsTest extends TestCase
 
         $response->assertCreated();
         $response->assertJsonPath('data.slug', 'create-order');
+        $response->assertJsonPath('data.guard', 'create-order');
         $response->assertJsonPath('data.version', 1);
     }
 
@@ -52,6 +53,15 @@ final class ProcessCrudEndpointsTest extends TestCase
         $response = $this->postJson('/process-builder/api/processes', ['name' => 'B', 'slug' => 'dup']);
 
         $response->assertStatus(409);
+    }
+
+    public function test_it_rejects_assigning_the_same_guard_to_two_processes(): void
+    {
+        $this->postJson('/process-builder/api/processes', ['name' => 'A', 'slug' => 'a', 'guard' => 'shared'])->assertCreated();
+
+        $this->postJson('/process-builder/api/processes', ['name' => 'B', 'slug' => 'b', 'guard' => 'shared'])
+            ->assertStatus(409)
+            ->assertJsonPath('errors.0.code', 'process.guard_taken');
     }
 
     public function test_it_validates_required_fields(): void

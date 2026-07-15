@@ -17,6 +17,7 @@ const existingProcess: ProcessDefinition = {
     entryNodeId: null,
     nodes: [],
     edges: [],
+    lanes: [],
     metadata: { createdAt: '', updatedAt: '', generatedAt: null, generatorVersion: null },
 };
 

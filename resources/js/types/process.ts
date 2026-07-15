@@ -24,6 +24,7 @@ export type NodeType =
     | 'end';
 
 export const IMPLEMENTED_NODE_TYPES: readonly NodeType[] = [
+    'start',
     'route',
     'middleware',
     'form_request',
@@ -46,6 +47,7 @@ export interface Position {
 }
 
 interface BaseNodeData {
+    laneId?: string | null;
     [key: string]: unknown;
 }
 
@@ -160,6 +162,16 @@ export interface ProcessEdge {
     label?: string | null;
 }
 
+export type LaneActorType = 'human' | 'system' | null;
+
+export interface ProcessLane {
+    id: string;
+    name: string;
+    actorType: LaneActorType;
+    order: number;
+    color: string | null;
+}
+
 export type ProcessStatus = 'draft' | 'validated' | 'generated' | 'archived';
 
 export interface ProcessMetadata {
@@ -174,12 +186,14 @@ export interface ProcessDefinition {
     id: string;
     name: string;
     slug: string;
+    guard?: string;
     description: string | null;
     version: number;
     status: ProcessStatus;
     entryNodeId: string | null;
     nodes: ProcessNode[];
     edges: ProcessEdge[];
+    lanes: ProcessLane[];
     metadata: ProcessMetadata;
 }
 

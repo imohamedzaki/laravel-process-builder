@@ -5,13 +5,19 @@ import type { ProcessDefinition, ValidationResult } from '@/types/process';
 export interface CreateProcessPayload {
     name: string;
     slug: string;
+    guard?: string;
     description?: string | null;
     entryNodeId?: string | null;
     nodes?: ProcessDefinition['nodes'];
     edges?: ProcessDefinition['edges'];
+    lanes?: ProcessDefinition['lanes'];
 }
 
 export type UpdateProcessPayload = CreateProcessPayload;
+
+export interface GeneratedFilePreview { logicalType: string; relativePath: string; contents: string; sha256: string }
+export interface ProcessPreview { files: GeneratedFilePreview[]; validation: ValidationResult; previewToken: string | null }
+export interface GenerationResult { files: GeneratedFilePreview[]; backup: unknown | null }
 
 export async function fetchProcesses(): Promise<ProcessDefinition[]> {
     const response = await apiClient.get<ApiEnvelope<ProcessDefinition[]>>('/processes');
@@ -50,5 +56,15 @@ export async function duplicateProcess(idOrSlug: string): Promise<ProcessDefinit
 export async function validateProcess(idOrSlug: string): Promise<ValidationResult> {
     const response = await apiClient.post<ApiEnvelope<ValidationResult>>(`/processes/${idOrSlug}/validate`);
 
+    return response.data.data;
+}
+
+export async function previewProcess(idOrSlug: string): Promise<ProcessPreview> {
+    const response = await apiClient.post<ApiEnvelope<ProcessPreview>>(`/processes/${idOrSlug}/preview`);
+    return response.data.data;
+}
+
+export async function generateProcess(idOrSlug: string, previewToken: string): Promise<GenerationResult> {
+    const response = await apiClient.post<ApiEnvelope<GenerationResult>>(`/processes/${idOrSlug}/generate`, { previewToken });
     return response.data.data;
 }

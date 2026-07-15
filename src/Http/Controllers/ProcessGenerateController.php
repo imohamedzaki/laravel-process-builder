@@ -13,6 +13,7 @@ use MohamedZaki\LaravelProcessBuilder\Exceptions\ProcessBuilderException;
 use MohamedZaki\LaravelProcessBuilder\Exceptions\ProcessNotFoundException;
 use MohamedZaki\LaravelProcessBuilder\Generation\GenerationService;
 use MohamedZaki\LaravelProcessBuilder\Http\Requests\GenerateProcessRequest;
+use MohamedZaki\LaravelProcessBuilder\LaravelProcessBuilderServiceProvider;
 use MohamedZaki\LaravelProcessBuilder\Security\PreviewTokenSigner;
 
 final class ProcessGenerateController
@@ -58,6 +59,9 @@ final class ProcessGenerateController
                 $result->backup->backedUpRelativePaths,
             );
         }
+
+        $generatedDefinition = $definition->withGenerated(LaravelProcessBuilderServiceProvider::VERSION);
+        $this->repository->save($generatedDefinition);
 
         $this->auditLogger->record(
             AuditAction::GenerationCompleted,

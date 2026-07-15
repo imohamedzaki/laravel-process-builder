@@ -15,6 +15,22 @@ final class ConnectionMap
 
     public static function isAllowed(NodeType $source, NodeType $target, ?string $sourceHandle = null): bool
     {
+        if ($target === NodeType::Start || in_array($source, [NodeType::End, NodeType::Success, NodeType::Failure, NodeType::Exception], strict: true)) {
+            return false;
+        }
+
+        if ($source === NodeType::Start) {
+            return true;
+        }
+
+        if ($source === NodeType::Response) {
+            return $target === NodeType::End;
+        }
+
+        if ($source !== NodeType::Condition) {
+            return self::rank($source) <= self::rank($target);
+        }
+
         foreach (self::rules() as $rule) {
             if ($rule['source'] !== $source || $rule['target'] !== $target) {
                 continue;
@@ -28,6 +44,29 @@ final class ConnectionMap
         }
 
         return false;
+    }
+
+    private static function rank(NodeType $type): int
+    {
+        return match ($type) {
+            NodeType::Start => 0,
+            NodeType::Route => 10,
+            NodeType::Middleware => 20,
+            NodeType::FormRequest => 30,
+            NodeType::Authorization => 35,
+            NodeType::Controller => 40,
+            NodeType::Action => 50,
+            NodeType::Service => 55,
+            NodeType::Transaction => 60,
+            NodeType::Model, NodeType::ModelCreate, NodeType::ModelUpdate, NodeType::ModelDelete => 70,
+            NodeType::Condition => 75,
+            NodeType::Event => 80,
+            NodeType::Job => 85,
+            NodeType::Notification => 90,
+            NodeType::ApiResource => 95,
+            NodeType::Response => 100,
+            NodeType::Success, NodeType::Failure, NodeType::Exception, NodeType::End => 110,
+        };
     }
 
     /**

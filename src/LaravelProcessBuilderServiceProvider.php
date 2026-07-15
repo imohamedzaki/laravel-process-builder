@@ -48,6 +48,7 @@ use MohamedZaki\LaravelProcessBuilder\Validation\Rules\AllowedConnectionsRule;
 use MohamedZaki\LaravelProcessBuilder\Validation\Rules\ClassNameRule;
 use MohamedZaki\LaravelProcessBuilder\Validation\Rules\FormRequestRule;
 use MohamedZaki\LaravelProcessBuilder\Validation\Rules\GraphStructureRule;
+use MohamedZaki\LaravelProcessBuilder\Validation\Rules\LaneReferenceRule;
 use MohamedZaki\LaravelProcessBuilder\Validation\Rules\RouteCollisionRule;
 use MohamedZaki\LaravelProcessBuilder\Validation\Rules\RouteRule;
 use MohamedZaki\LaravelProcessBuilder\Validation\ValidationPipeline;
@@ -195,6 +196,7 @@ final class LaravelProcessBuilderServiceProvider extends ServiceProvider
                 new RouteCollisionRule($app->make(ProcessRepository::class)),
                 new ClassNameRule(),
                 new FormRequestRule(),
+                new LaneReferenceRule(),
             ]);
         });
     }

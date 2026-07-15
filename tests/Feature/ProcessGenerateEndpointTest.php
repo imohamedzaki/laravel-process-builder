@@ -63,12 +63,14 @@ final class ProcessGenerateEndpointTest extends TestCase
         $this->postJson('/process-builder/api/processes', [
             'name' => 'Create Order',
             'slug' => 'create-order',
-            'entryNodeId' => 'r1',
+            'entryNodeId' => 'start1',
             'nodes' => [
+                ['id' => 'start1', 'type' => 'start', 'position' => ['x' => -1, 'y' => 0], 'data' => ['label' => 'create-order guard']],
                 ['id' => 'r1', 'type' => 'route', 'position' => ['x' => 0, 'y' => 0], 'data' => ['method' => 'POST', 'uri' => '/orders', 'name' => 'orders.store']],
                 ['id' => 'c1', 'type' => 'controller', 'position' => ['x' => 1, 'y' => 0], 'data' => ['class' => 'OrderController', 'method' => 'store']],
             ],
             'edges' => [
+                ['id' => 'e0', 'source' => 'start1', 'target' => 'r1'],
                 ['id' => 'e1', 'source' => 'r1', 'target' => 'c1'],
             ],
         ])->assertCreated();
@@ -86,6 +88,20 @@ final class ProcessGenerateEndpointTest extends TestCase
 
         $response->assertOk();
         $this->assertFileExists($this->controllersDirectory.'/OrderController.php');
+        $routesPath = dirname($this->definitionsDirectory).'/routes/process-builder.php';
+        $this->assertFileExists($routesPath);
+        $this->assertStringContainsString('[OrderController::class, \'store\']', (string) file_get_contents($routesPath));
+        $this->assertStringNotContainsString('abort(501)', (string) file_get_contents($routesPath));
+
+        exec('php -l '.escapeshellarg($this->controllersDirectory.'/OrderController.php'), $controllerLint, $controllerExitCode);
+        exec('php -l '.escapeshellarg($routesPath), $routesLint, $routesExitCode);
+        $this->assertSame(0, $controllerExitCode, implode("\n", $controllerLint));
+        $this->assertSame(0, $routesExitCode, implode("\n", $routesLint));
+
+        $this->getJson('/process-builder/api/processes/create-order')
+            ->assertOk()
+            ->assertJsonPath('data.status', 'generated')
+            ->assertJsonPath('data.metadata.generatorVersion', '0.1.0');
     }
 
     public function test_it_rejects_generation_without_a_token(): void

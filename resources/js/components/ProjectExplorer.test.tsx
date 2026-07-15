@@ -6,6 +6,8 @@ import { useProjectStore } from '@/stores/useProjectStore';
 import * as projectApi from '@/api/project';
 import type { ProjectSummary } from '@/types/project';
 
+vi.mock('@/api/processes', () => ({ fetchProcesses: vi.fn().mockResolvedValue([]) }));
+
 const summary: ProjectSummary = {
     routes: [
         {

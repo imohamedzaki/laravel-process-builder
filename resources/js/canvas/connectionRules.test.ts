@@ -10,8 +10,12 @@ describe('isConnectionAllowed', () => {
         expect(isConnectionAllowed('controller', 'action')).toBe(true);
     });
 
-    it('rejects an arbitrary disallowed connection', () => {
-        expect(isConnectionAllowed('route', 'event')).toBe(false);
+    it('allows normal pipeline components to connect directly', () => {
+        expect(isConnectionAllowed('route', 'event')).toBe(true);
+    });
+
+    it('rejects connections out of terminal components', () => {
+        expect(isConnectionAllowed('end', 'event')).toBe(false);
     });
 
     it('requires the correct handle for condition branches', () => {

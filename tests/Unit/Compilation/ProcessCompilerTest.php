@@ -54,8 +54,9 @@ final class ProcessCompilerTest extends TestCase
         return ProcessDefinition::fromArray([
             'name' => 'Create Order',
             'slug' => 'create-order',
-            'entryNodeId' => 'route_01',
+            'entryNodeId' => 'start_01',
             'nodes' => [
+                ['id' => 'start_01', 'type' => 'start', 'position' => ['x' => -100, 'y' => 0], 'data' => ['label' => 'create-order guard']],
                 ['id' => 'route_01', 'type' => 'route', 'position' => ['x' => 0, 'y' => 0], 'data' => [
                     'method' => 'POST',
                     'uri' => '/orders',
@@ -88,6 +89,7 @@ final class ProcessCompilerTest extends TestCase
                 ['id' => 'end_01', 'type' => 'end', 'position' => ['x' => 800, 'y' => 0], 'data' => []],
             ],
             'edges' => [
+                ['id' => 'e0', 'source' => 'start_01', 'target' => 'route_01'],
                 ['id' => 'e1', 'source' => 'route_01', 'target' => 'request_01'],
                 ['id' => 'e2', 'source' => 'request_01', 'target' => 'controller_01'],
                 ['id' => 'e3', 'source' => 'controller_01', 'target' => 'action_01'],

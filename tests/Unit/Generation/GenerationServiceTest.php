@@ -87,12 +87,14 @@ final class GenerationServiceTest extends TestCase
         $process = ProcessDefinition::fromArray([
             'name' => 'Create Order',
             'slug' => 'create-order',
-            'entryNodeId' => 'r1',
+            'entryNodeId' => 'start1',
             'nodes' => [
+                ['id' => 'start1', 'type' => 'start', 'position' => ['x' => -1, 'y' => 0], 'data' => ['label' => 'create-order guard']],
                 ['id' => 'r1', 'type' => 'route', 'position' => ['x' => 0, 'y' => 0], 'data' => ['method' => 'POST', 'uri' => '/orders', 'name' => 'orders.store']],
                 ['id' => 'c1', 'type' => 'controller', 'position' => ['x' => 1, 'y' => 0], 'data' => ['class' => 'OrderController', 'method' => 'store']],
             ],
             'edges' => [
+                ['id' => 'e0', 'source' => 'start1', 'target' => 'r1'],
                 ['id' => 'e1', 'source' => 'r1', 'target' => 'c1'],
             ],
         ]);

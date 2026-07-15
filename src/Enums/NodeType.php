@@ -38,6 +38,7 @@ enum NodeType: string
     public static function implemented(): array
     {
         return [
+            self::Start,
             self::Route,
             self::Middleware,
             self::FormRequest,

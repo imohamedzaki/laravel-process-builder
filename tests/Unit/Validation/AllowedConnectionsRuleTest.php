@@ -29,13 +29,13 @@ final class AllowedConnectionsRuleTest extends TestCase
         $this->assertTrue($result->isValid());
     }
 
-    public function test_it_rejects_a_disallowed_connection(): void
+    public function test_it_rejects_a_connection_out_of_a_terminal_node(): void
     {
         $process = ProcessDefinition::fromArray([
             'name' => 'Invalid',
             'slug' => 'invalid',
             'nodes' => [
-                ['id' => 'r1', 'type' => 'route', 'position' => [], 'data' => []],
+                ['id' => 'r1', 'type' => 'end', 'position' => [], 'data' => []],
                 ['id' => 'job1', 'type' => 'job', 'position' => [], 'data' => []],
             ],
             'edges' => [

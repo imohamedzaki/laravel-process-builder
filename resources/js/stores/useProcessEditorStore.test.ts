@@ -1,10 +1,14 @@
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
 import { useProcessEditorStore } from '@/stores/useProcessEditorStore';
 import * as processApi from '@/api/processes';
-import type { ProcessNode } from '@/types/process';
+import type { ProcessLane, ProcessNode } from '@/types/process';
 
 function makeNode(id: string): ProcessNode {
     return { id, type: 'action', position: { x: 0, y: 0 }, data: {} };
+}
+
+function makeLane(id: string, order = 0): ProcessLane {
+    return { id, name: id, actorType: null, order, color: null };
 }
 
 describe('useProcessEditorStore', () => {
@@ -13,6 +17,7 @@ describe('useProcessEditorStore', () => {
             process: null,
             nodes: [],
             edges: [],
+            lanes: [],
             selectedNodeId: null,
             isDirty: false,
             isLoading: false,
@@ -33,6 +38,9 @@ describe('useProcessEditorStore', () => {
         const state = useProcessEditorStore.getState();
         expect(state.process?.name).toBe('Create Order');
         expect(state.process?.slug).toBe('create-order');
+        expect(state.process?.guard).toBe('create-order');
+        expect(state.process?.entryNodeId).toBe('start_create-order');
+        expect(state.nodes[0]?.type).toBe('start');
         expect(state.isDirty).toBe(false);
     });
 
@@ -103,6 +111,7 @@ describe('useProcessEditorStore', () => {
             entryNodeId: null,
             nodes: [makeNode('n1')],
             edges: [],
+            lanes: [],
             metadata: { createdAt: '', updatedAt: '', generatedAt: null, generatorVersion: null },
         };
 
@@ -147,6 +156,7 @@ describe('useProcessEditorStore', () => {
                 entryNodeId: null,
                 nodes: [],
                 edges: [],
+                lanes: [],
                 metadata: { createdAt: '', updatedAt: '', generatedAt: null, generatorVersion: null },
             },
         });
@@ -158,5 +168,47 @@ describe('useProcessEditorStore', () => {
         const state = useProcessEditorStore.getState();
         expect(state.validation?.valid).toBe(false);
         expect(state.isValidating).toBe(false);
+    });
+
+    it('adds a lane and marks the state dirty', () => {
+        useProcessEditorStore.getState().addLane(makeLane('lane_1'));
+
+        const state = useProcessEditorStore.getState();
+        expect(state.lanes).toHaveLength(1);
+        expect(state.isDirty).toBe(true);
+    });
+
+    it('updates a lane by id', () => {
+        useProcessEditorStore.getState().addLane(makeLane('lane_1'));
+        useProcessEditorStore.getState().updateLane('lane_1', { name: 'Renamed' });
+
+        expect(useProcessEditorStore.getState().lanes[0]?.name).toBe('Renamed');
+    });
+
+    it('removes a lane and unassigns any nodes referencing it', () => {
+        useProcessEditorStore.getState().addLane(makeLane('lane_1'));
+        useProcessEditorStore.getState().addNode(makeNode('n1'));
+        useProcessEditorStore.getState().assignNodeToLane('n1', 'lane_1');
+
+        useProcessEditorStore.getState().removeLane('lane_1');
+
+        const state = useProcessEditorStore.getState();
+        expect(state.lanes).toHaveLength(0);
+        expect(state.nodes[0]?.data.laneId).toBeNull();
+    });
+
+    it('assigns a node to a lane', () => {
+        useProcessEditorStore.getState().addNode(makeNode('n1'));
+        useProcessEditorStore.getState().assignNodeToLane('n1', 'lane_1');
+
+        expect(useProcessEditorStore.getState().nodes[0]?.data.laneId).toBe('lane_1');
+    });
+
+    it('unassigns a node from a lane when passed null', () => {
+        useProcessEditorStore.getState().addNode(makeNode('n1'));
+        useProcessEditorStore.getState().assignNodeToLane('n1', 'lane_1');
+        useProcessEditorStore.getState().assignNodeToLane('n1', null);
+
+        expect(useProcessEditorStore.getState().nodes[0]?.data.laneId).toBeNull();
     });
 });

@@ -15,3 +15,5 @@ workbench:
     views: true
   build:
     - asset-publish
+  assets:
+    - process-builder-assets

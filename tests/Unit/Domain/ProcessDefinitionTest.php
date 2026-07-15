@@ -25,6 +25,7 @@ final class ProcessDefinitionTest extends TestCase
         $this->assertSame(ProcessStatus::Draft, $process->status);
         $this->assertSame([], $process->nodes);
         $this->assertSame([], $process->edges);
+        $this->assertSame([], $process->lanes);
         $this->assertNotSame('', $process->id);
     }
 
@@ -133,5 +134,57 @@ final class ProcessDefinitionTest extends TestCase
 
         $this->assertSame($process->id, $bumped->id);
         $this->assertSame($process->version + 1, $bumped->version);
+        $this->assertSame($process->lanes, $bumped->lanes);
+    }
+
+    public function test_it_hydrates_with_no_lanes_key_for_backward_compatibility(): void
+    {
+        $process = ProcessDefinition::fromArray([
+            'name' => 'Legacy',
+            'slug' => 'legacy',
+            'nodes' => [
+                ['id' => 'n1', 'type' => 'route', 'position' => [], 'data' => []],
+            ],
+        ]);
+
+        $this->assertSame([], $process->lanes);
+    }
+
+    public function test_it_hydrates_lanes_and_round_trips_them(): void
+    {
+        $process = ProcessDefinition::fromArray([
+            'name' => 'Lanes',
+            'slug' => 'lanes',
+            'lanes' => [
+                ['id' => 'lane_manager', 'name' => 'Manager', 'actorType' => 'human', 'order' => 0, 'color' => '#fff'],
+                ['id' => 'lane_system', 'name' => 'System', 'actorType' => 'system', 'order' => 1, 'color' => null],
+            ],
+        ]);
+
+        $this->assertCount(2, $process->lanes);
+        $this->assertSame('Manager', $process->laneById('lane_manager')?->name);
+        $this->assertSame('system', $process->laneById('lane_system')?->actorType);
+        $this->assertNull($process->laneById('missing'));
+
+        $rehydrated = ProcessDefinition::fromArray($process->toArray());
+
+        $this->assertEquals(
+            array_map(static fn ($lane) => $lane->toArray(), $process->lanes),
+            array_map(static fn ($lane) => $lane->toArray(), $rehydrated->lanes),
+        );
+    }
+
+    public function test_it_rejects_duplicate_lane_ids(): void
+    {
+        $this->expectException(InvalidProcessDefinitionException::class);
+
+        ProcessDefinition::fromArray([
+            'name' => 'Dup Lanes',
+            'slug' => 'dup-lanes',
+            'lanes' => [
+                ['id' => 'lane_1', 'name' => 'A', 'actorType' => null, 'order' => 0, 'color' => null],
+                ['id' => 'lane_1', 'name' => 'B', 'actorType' => null, 'order' => 1, 'color' => null],
+            ],
+        ]);
     }
 }

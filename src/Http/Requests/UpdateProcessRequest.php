@@ -21,6 +21,7 @@ final class UpdateProcessRequest extends FormRequest
         return [
             'name' => ['required', 'string', 'max:255'],
             'slug' => ['required', 'string', 'max:255', 'regex:/^[a-z0-9]+(?:-[a-z0-9]+)*$/'],
+            'guard' => ['nullable', 'string', 'max:255', 'regex:/^[a-z0-9]+(?:[._-][a-z0-9]+)*$/'],
             'description' => ['nullable', 'string'],
             'entryNodeId' => ['nullable', 'string'],
             'nodes' => ['array'],
@@ -32,6 +33,12 @@ final class UpdateProcessRequest extends FormRequest
             'edges.*.id' => ['required_with:edges', 'string'],
             'edges.*.source' => ['required_with:edges', 'string'],
             'edges.*.target' => ['required_with:edges', 'string'],
+            'lanes' => ['array'],
+            'lanes.*.id' => ['required_with:lanes', 'string'],
+            'lanes.*.name' => ['required_with:lanes', 'string'],
+            'lanes.*.actorType' => ['nullable', 'string', 'in:human,system'],
+            'lanes.*.order' => ['nullable', 'integer'],
+            'lanes.*.color' => ['nullable', 'string'],
         ];
     }
 }
