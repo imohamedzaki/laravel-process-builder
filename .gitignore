@@ -19,7 +19,6 @@ tsconfig.tsbuildinfo
 /workbench/storage/process-builder
 /workbench/bootstrap/cache/*.tmp
 composer.lock
-package-lock.json
 /.env
 !/workbench/.env
 .phpunit.result.cache
