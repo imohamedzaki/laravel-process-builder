@@ -10,4 +10,14 @@ final class UnauthorizedEnvironmentException extends ProcessBuilderException
     {
         return new self("The current environment [{$environment}] is not authorized to use Laravel Process Builder.");
     }
+
+    protected function httpStatus(): int
+    {
+        return 403;
+    }
+
+    protected function errorCode(): string
+    {
+        return 'process.unauthorized_environment';
+    }
 }

@@ -10,4 +10,14 @@ final class GenerationDisabledException extends ProcessBuilderException
     {
         return new self('Code generation is disabled. Enable it via PROCESS_BUILDER_GENERATION_ENABLED.');
     }
+
+    protected function httpStatus(): int
+    {
+        return 403;
+    }
+
+    protected function errorCode(): string
+    {
+        return 'process.generation_disabled';
+    }
 }

@@ -10,4 +10,14 @@ final class BackupNotFoundException extends ProcessBuilderException
     {
         return new self("No backup found with id [{$backupId}].");
     }
+
+    protected function httpStatus(): int
+    {
+        return 404;
+    }
+
+    protected function errorCode(): string
+    {
+        return 'process.backup_not_found';
+    }
 }

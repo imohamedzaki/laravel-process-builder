@@ -10,4 +10,14 @@ final class FileOwnershipConflictException extends ProcessBuilderException
     {
         return new self("The file [{$relativePath}] is not managed by Laravel Process Builder and cannot be overwritten.");
     }
+
+    protected function httpStatus(): int
+    {
+        return 409;
+    }
+
+    protected function errorCode(): string
+    {
+        return 'process.file_ownership_conflict';
+    }
 }

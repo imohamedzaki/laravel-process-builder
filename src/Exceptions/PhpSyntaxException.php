@@ -10,4 +10,14 @@ final class PhpSyntaxException extends ProcessBuilderException
     {
         return new self("Generated file [{$relativePath}] failed PHP syntax validation: {$reason}");
     }
+
+    protected function httpStatus(): int
+    {
+        return 500;
+    }
+
+    protected function errorCode(): string
+    {
+        return 'process.php_syntax_error';
+    }
 }

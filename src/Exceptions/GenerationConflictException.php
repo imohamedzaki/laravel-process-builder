@@ -20,4 +20,14 @@ final class GenerationConflictException extends ProcessBuilderException
     {
         return new self("The managed file [{$relativePath}] was modified outside of Laravel Process Builder. Use force to overwrite.");
     }
+
+    protected function httpStatus(): int
+    {
+        return 409;
+    }
+
+    protected function errorCode(): string
+    {
+        return 'process.generation_conflict';
+    }
 }
