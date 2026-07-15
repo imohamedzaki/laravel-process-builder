@@ -4,7 +4,7 @@
 
 A visual process builder for designing Laravel routes, controllers, actions, validations, services, and application workflows — conceptually similar to the Joget Process Builder, but generating clean, native, maintainable Laravel code instead of running inside a proprietary engine.
 
-> Status: early MVP under active development. See [IMPLEMENTATION_STATUS.md](IMPLEMENTATION_STATUS.md) for current progress.
+> Status: feature-complete MVP, pre-1.0. All planned milestones (scanning, visual editor, validation, preview, safe generation, backups/rollback, audit logging, Artisan commands) are implemented and tested. See [IMPLEMENTATION_STATUS.md](IMPLEMENTATION_STATUS.md) for details.
 
 ---
 
@@ -50,7 +50,8 @@ Laravel Process Builder lets you design an application flow — route → middle
 - Two-step preview → generate workflow with signed confirmation tokens.
 - Managed-file ownership rules, checksums, and conflict detection.
 - Automatic backups and one-click rollback.
-- Artisan commands for install, doctor, scan, validate, preview, generate, backups, and rollback.
+- JSON-lines audit log of every process/generation/backup/rollback event.
+- Artisan commands for install, doctor, scan, validate, preview, generate, backups, rollback, and installing bundled demo processes.
 
 ## Requirements
 
@@ -169,7 +170,10 @@ php artisan process-builder:preview {process}
 php artisan process-builder:generate {process}
 php artisan process-builder:backups {process}
 php artisan process-builder:rollback {process} {backup}
+php artisan process-builder:demo [--force]
 ```
+
+`process-builder:demo` installs two bundled example processes — "Create Order" (linear route → validation → controller → action → model → event → resource → response) and "Approve Leave Request" (adds a branching condition, a job, and multiple response outcomes) — useful for exploring the dashboard and the generated code output without building a process from scratch.
 
 ## Process definition format
 

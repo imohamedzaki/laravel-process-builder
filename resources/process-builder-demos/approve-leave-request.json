@@ -1,0 +1,118 @@
+{
+    "schemaVersion": "1.0",
+    "name": "Approve Leave Request",
+    "slug": "approve-leave-request",
+    "description": "Approves or rejects a pending leave request: on approval, updates the record and queues a notification job; on rejection, returns an error response.",
+    "status": "draft",
+    "entryNodeId": "route_01",
+    "nodes": [
+        {
+            "id": "route_01",
+            "type": "route",
+            "position": { "x": 0, "y": 0 },
+            "data": {
+                "method": "POST",
+                "uri": "/leave-requests/{leaveRequest}/approve",
+                "name": "leave-requests.approve",
+                "middleware": ["auth:sanctum"]
+            }
+        },
+        {
+            "id": "request_01",
+            "type": "form_request",
+            "position": { "x": 220, "y": 0 },
+            "data": {
+                "class": "ApproveLeaveRequestRequest",
+                "rules": {
+                    "decision": ["required", "in:approved,rejected"],
+                    "comment": ["nullable", "string", "max:500"]
+                }
+            }
+        },
+        {
+            "id": "controller_01",
+            "type": "controller",
+            "position": { "x": 440, "y": 0 },
+            "data": {
+                "class": "LeaveRequestController",
+                "method": "approve"
+            }
+        },
+        {
+            "id": "action_01",
+            "type": "action",
+            "position": { "x": 660, "y": 0 },
+            "data": {
+                "class": "DecideLeaveRequestAction"
+            }
+        },
+        {
+            "id": "condition_01",
+            "type": "condition",
+            "position": { "x": 880, "y": 0 },
+            "data": {
+                "expression": "decision === 'approved'",
+                "description": "Was the leave request approved?"
+            }
+        },
+        {
+            "id": "action_approve_01",
+            "type": "action",
+            "position": { "x": 1100, "y": -100 },
+            "data": {
+                "class": "RecordLeaveApprovalAction"
+            }
+        },
+        {
+            "id": "model_update_01",
+            "type": "model_update",
+            "position": { "x": 1320, "y": -100 },
+            "data": {
+                "model": "App\\Models\\LeaveRequest"
+            }
+        },
+        {
+            "id": "job_01",
+            "type": "job",
+            "position": { "x": 1540, "y": -100 },
+            "data": {
+                "class": "NotifyLeaveRequestApprovedJob"
+            }
+        },
+        {
+            "id": "response_approved_01",
+            "type": "response",
+            "position": { "x": 1760, "y": -100 },
+            "data": {
+                "status": 200
+            }
+        },
+        {
+            "id": "response_rejected_01",
+            "type": "response",
+            "position": { "x": 1100, "y": 150 },
+            "data": {
+                "status": 422
+            }
+        },
+        {
+            "id": "end_01",
+            "type": "end",
+            "position": { "x": 1980, "y": 0 },
+            "data": {}
+        }
+    ],
+    "edges": [
+        { "id": "e1", "source": "route_01", "target": "request_01" },
+        { "id": "e2", "source": "request_01", "target": "controller_01" },
+        { "id": "e3", "source": "controller_01", "target": "action_01" },
+        { "id": "e4", "source": "action_01", "target": "condition_01" },
+        { "id": "e5", "source": "condition_01", "sourceHandle": "success", "target": "action_approve_01" },
+        { "id": "e6", "source": "action_approve_01", "target": "model_update_01" },
+        { "id": "e7", "source": "model_update_01", "target": "job_01" },
+        { "id": "e8", "source": "job_01", "target": "response_approved_01" },
+        { "id": "e9", "source": "condition_01", "sourceHandle": "failure", "target": "response_rejected_01" },
+        { "id": "e10", "source": "response_approved_01", "target": "end_01" },
+        { "id": "e11", "source": "response_rejected_01", "target": "end_01" }
+    ]
+}

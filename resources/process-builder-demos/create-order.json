@@ -1,0 +1,99 @@
+{
+    "schemaVersion": "1.0",
+    "name": "Create Order",
+    "slug": "create-order",
+    "description": "Creates a new customer order: validates the request, persists the order, fires an event, and returns the created resource.",
+    "status": "draft",
+    "entryNodeId": "route_01",
+    "nodes": [
+        {
+            "id": "route_01",
+            "type": "route",
+            "position": { "x": 0, "y": 0 },
+            "data": {
+                "method": "POST",
+                "uri": "/orders",
+                "name": "orders.store",
+                "middleware": ["auth:sanctum"]
+            }
+        },
+        {
+            "id": "request_01",
+            "type": "form_request",
+            "position": { "x": 220, "y": 0 },
+            "data": {
+                "class": "StoreOrderRequest",
+                "rules": {
+                    "customer_id": ["required", "integer"],
+                    "items": ["required", "array", "min:1"],
+                    "items.*.product_id": ["required", "integer"],
+                    "items.*.quantity": ["required", "integer", "min:1"]
+                }
+            }
+        },
+        {
+            "id": "controller_01",
+            "type": "controller",
+            "position": { "x": 440, "y": 0 },
+            "data": {
+                "class": "OrderController",
+                "method": "store"
+            }
+        },
+        {
+            "id": "action_01",
+            "type": "action",
+            "position": { "x": 660, "y": 0 },
+            "data": {
+                "class": "CreateOrderAction"
+            }
+        },
+        {
+            "id": "model_01",
+            "type": "model_create",
+            "position": { "x": 880, "y": 0 },
+            "data": {
+                "model": "App\\Models\\Order"
+            }
+        },
+        {
+            "id": "event_01",
+            "type": "event",
+            "position": { "x": 1100, "y": 0 },
+            "data": {
+                "class": "OrderCreated"
+            }
+        },
+        {
+            "id": "resource_01",
+            "type": "api_resource",
+            "position": { "x": 1320, "y": 0 },
+            "data": {
+                "class": "OrderResource"
+            }
+        },
+        {
+            "id": "response_01",
+            "type": "response",
+            "position": { "x": 1540, "y": 0 },
+            "data": {
+                "status": 201
+            }
+        },
+        {
+            "id": "end_01",
+            "type": "end",
+            "position": { "x": 1760, "y": 0 },
+            "data": {}
+        }
+    ],
+    "edges": [
+        { "id": "e1", "source": "route_01", "target": "request_01" },
+        { "id": "e2", "source": "request_01", "target": "controller_01" },
+        { "id": "e3", "source": "controller_01", "target": "action_01" },
+        { "id": "e4", "source": "action_01", "target": "model_01" },
+        { "id": "e5", "source": "model_01", "target": "event_01" },
+        { "id": "e6", "source": "event_01", "target": "response_01" },
+        { "id": "e7", "source": "response_01", "target": "end_01" }
+    ]
+}

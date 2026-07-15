@@ -14,6 +14,10 @@ tsconfig.tsbuildinfo
 /workbench/storage/framework/sessions
 /workbench/storage/framework/views
 /workbench/storage/logs
+/workbench/process-builder
+/workbench/storage/app/process-builder
+/workbench/storage/process-builder
+/workbench/bootstrap/cache/*.tmp
 composer.lock
 package-lock.json
 /.env

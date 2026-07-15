@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace MohamedZaki\LaravelProcessBuilder\Http\Controllers;
 
 use Illuminate\Http\JsonResponse;
+use MohamedZaki\LaravelProcessBuilder\Audit\AuditLogger;
 use MohamedZaki\LaravelProcessBuilder\Contracts\ProcessRepository;
 use MohamedZaki\LaravelProcessBuilder\Domain\Processes\ProcessDefinition;
+use MohamedZaki\LaravelProcessBuilder\Enums\AuditAction;
 use MohamedZaki\LaravelProcessBuilder\Exceptions\InvalidProcessDefinitionException;
 use MohamedZaki\LaravelProcessBuilder\Exceptions\ProcessNotFoundException;
 use MohamedZaki\LaravelProcessBuilder\Http\Requests\StoreProcessRequest;
@@ -14,8 +16,10 @@ use MohamedZaki\LaravelProcessBuilder\Http\Requests\UpdateProcessRequest;
 
 final class ProcessController
 {
-    public function __construct(private readonly ProcessRepository $repository)
-    {
+    public function __construct(
+        private readonly ProcessRepository $repository,
+        private readonly AuditLogger $auditLogger,
+    ) {
     }
 
     public function index(): JsonResponse
@@ -46,6 +50,8 @@ final class ProcessController
         }
 
         $this->repository->save($process);
+
+        $this->auditLogger->record(AuditAction::ProcessCreated, 'success', $process->id, $process->version);
 
         return response()->json([
             'data' => $process->toArray(),
@@ -95,6 +101,8 @@ final class ProcessController
 
         $this->repository->save($updated);
 
+        $this->auditLogger->record(AuditAction::ProcessUpdated, 'success', $updated->id, $updated->version);
+
         return response()->json([
             'data' => $updated->toArray(),
             'meta' => [],
@@ -104,11 +112,15 @@ final class ProcessController
 
     public function destroy(string $process): JsonResponse
     {
-        if (! $this->repository->exists($process)) {
+        $existing = $this->repository->find($process);
+
+        if ($existing === null) {
             throw ProcessNotFoundException::forIdentifier($process);
         }
 
         $this->repository->delete($process);
+
+        $this->auditLogger->record(AuditAction::ProcessDeleted, 'success', $existing->id, $existing->version);
 
         return response()->json([
             'data' => null,

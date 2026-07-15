@@ -1,5 +1,8 @@
 {
     "preset": "psr12",
+    "exclude": [
+        "workbench/config"
+    ],
     "rules": {
         "declare_strict_types": true,
         "final_class": false,
