@@ -1,0 +1,24 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Providers;
+
+use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\ServiceProvider;
+
+/**
+ * Controls who may access the Laravel Process Builder dashboard and API.
+ *
+ * This gate denies everyone by default. Replace the closure below with
+ * your application's real authorization check, for example:
+ *
+ *   Gate::define('manage-process-builder', fn ($user) => $user->isAdmin());
+ */
+final class ProcessBuilderAuthServiceProvider extends ServiceProvider
+{
+    public function boot(): void
+    {
+        Gate::define('manage-process-builder', fn ($user): bool => false);
+    }
+}

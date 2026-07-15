@@ -22,6 +22,8 @@ final class InstallCommandTest extends TestCase
 
     private ?string $originalRealConfigContents;
 
+    private string $realAuthProviderPath;
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -58,6 +60,13 @@ final class InstallCommandTest extends TestCase
         }
 
         file_put_contents($this->realConfigPath, '<?php // placeholder seeded by InstallCommandTest; must not be overwritten');
+
+        // ensureAuthServiceProviderStub() writes to the real app_path() the same way
+        // publishConfiguration() writes to the real config_path() above — there is no way
+        // to redirect it into the isolated temp directory either. Make sure the workbench
+        // dev app never ends up with a stray stub file left behind by this test.
+        $this->realAuthProviderPath = app_path('Providers/ProcessBuilderAuthServiceProvider.php');
+        @unlink($this->realAuthProviderPath);
     }
 
     protected function tearDown(): void
@@ -69,6 +78,8 @@ final class InstallCommandTest extends TestCase
         } else {
             file_put_contents($this->realConfigPath, $this->originalRealConfigContents);
         }
+
+        @unlink($this->realAuthProviderPath);
 
         parent::tearDown();
     }
@@ -127,5 +138,29 @@ final class InstallCommandTest extends TestCase
             '<?php // placeholder seeded by InstallCommandTest; must not be overwritten',
             file_get_contents($this->realConfigPath),
         );
+    }
+
+    public function test_it_creates_the_authorization_provider_stub(): void
+    {
+        $this->expectConfigOverwriteDeclined()->assertExitCode(0);
+
+        $this->assertFileExists($this->realAuthProviderPath);
+        $this->assertStringContainsString(
+            "Gate::define('manage-process-builder'",
+            (string) file_get_contents($this->realAuthProviderPath),
+        );
+    }
+
+    public function test_it_does_not_overwrite_an_existing_authorization_provider_stub(): void
+    {
+        if (! is_dir(dirname($this->realAuthProviderPath))) {
+            mkdir(dirname($this->realAuthProviderPath), 0755, true);
+        }
+
+        file_put_contents($this->realAuthProviderPath, '<?php // custom content');
+
+        $this->expectConfigOverwriteDeclined()->assertExitCode(0);
+
+        $this->assertSame('<?php // custom content', file_get_contents($this->realAuthProviderPath));
     }
 }

@@ -22,6 +22,7 @@ final class InstallCommand extends Command
         $this->ensureAuditLogDirectory();
         $this->ensureManagedRouteFile();
         $this->ensureOutputDirectories();
+        $this->ensureAuthServiceProviderStub();
         $this->warnIfProductionGenerationEnabled();
         $this->displayEnvironmentVariables();
 
@@ -145,6 +146,42 @@ final class InstallCommand extends Command
                 return is_dir($path);
             });
         }
+    }
+
+    private function ensureAuthServiceProviderStub(): void
+    {
+        $destination = app_path('Providers/ProcessBuilderAuthServiceProvider.php');
+
+        if (is_file($destination)) {
+            $this->components->twoColumnDetail('Authorization provider stub', 'already exists, skipped');
+
+            return;
+        }
+
+        $this->components->task('Create authorization provider stub', function () use ($destination): bool {
+            $directory = dirname($destination);
+
+            if (! is_dir($directory)) {
+                mkdir($directory, 0755, true);
+            }
+
+            $stub = __DIR__.'/../../resources/stubs/auth-service-provider.stub';
+
+            return copy($stub, $destination);
+        });
+
+        $this->newLine();
+        $this->components->warn('ACTION REQUIRED: register the authorization provider.');
+        $this->line('  Laravel 11+, add this line to bootstrap/providers.php:');
+        $this->line('');
+        $this->line('    App\\Providers\\ProcessBuilderAuthServiceProvider::class,');
+        $this->line('');
+        $this->line('  Laravel 10 and earlier, add the same line to the providers[] array in config/app.php.');
+        $this->newLine();
+        $this->line('  The generated gate denies everyone by default. Edit');
+        $this->line('  app/Providers/ProcessBuilderAuthServiceProvider.php to add your real check, e.g.:');
+        $this->line('');
+        $this->line("    Gate::define('manage-process-builder', fn (\$user) => \$user->isAdmin());");
     }
 
     private function warnIfProductionGenerationEnabled(): void

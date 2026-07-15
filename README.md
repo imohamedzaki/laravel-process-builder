@@ -70,7 +70,10 @@ Because this package exposes application architecture and code-generation capabi
 composer require mohamedzaki/laravel-process-builder --dev
 
 php artisan process-builder:install
+php artisan vendor:publish --tag=process-builder-assets
 ```
+
+The dashboard's JavaScript and CSS ship pre-built inside the package — you do **not** need Node.js, npm, or a build step in your application. `vendor:publish --tag=process-builder-assets` only copies those already-built files into your app's `public/vendor/process-builder` directory. (Node/npm are only needed if you're developing this package itself — see [Development setup](#development-setup).)
 
 ## Configuration
 
@@ -100,13 +103,25 @@ Once enabled and in an authorized environment, visit:
 
 The dashboard is disabled by default outside of `local`, `development`, and `testing` environments, regardless of the `enabled` flag.
 
+If the page loads blank with no visible error, the built assets haven't been published yet — run `php artisan vendor:publish --tag=process-builder-assets` (see [Installation](#installation)). The dashboard view itself will also render an on-page message telling you to do this.
+
 ## Authorization
 
-Define the `manage-process-builder` gate in your application (e.g. in `AuthServiceProvider`) to control who may access the dashboard and API:
+`process-builder:install` generates `app/Providers/ProcessBuilderAuthServiceProvider.php`, a small dedicated provider containing the `manage-process-builder` gate (denying everyone by default). It never edits your existing `AppServiceProvider`/`AuthServiceProvider`, since those can contain arbitrary application code. Register the generated provider:
+
+- **Laravel 11+**: add it to the array in `bootstrap/providers.php`:
+  ```php
+  App\Providers\ProcessBuilderAuthServiceProvider::class,
+  ```
+- **Laravel 10 and earlier**: add the same line to the `providers` array in `config/app.php`.
+
+Then edit the stub to add your real authorization check:
 
 ```php
 Gate::define('manage-process-builder', fn ($user) => $user->isAdmin());
 ```
+
+Without this gate defined, anyone who can reach the route can use the dashboard — fine for local development, but it must be locked down before the package is ever enabled outside `local`/`development`/`testing`.
 
 ## Enabling code generation
 
