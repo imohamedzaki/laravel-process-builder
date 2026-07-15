@@ -1,0 +1,19 @@
+<?php
+
+declare(strict_types=1);
+
+/**
+ * This file is managed by Laravel Process Builder.
+ * Manual changes may be overwritten.
+ */
+
+namespace {{ namespace }};
+
+{{ imports }}
+final class {{ class }}
+{
+    public function {{ method }}({{ parameters }}): {{ returnType }}
+    {
+{{ body }}
+    }
+}

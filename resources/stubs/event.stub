@@ -1,0 +1,22 @@
+<?php
+
+declare(strict_types=1);
+
+/**
+ * This file is managed by Laravel Process Builder.
+ * Manual changes may be overwritten.
+ */
+
+namespace {{ namespace }};
+
+use Illuminate\Foundation\Events\Dispatchable;
+
+final class {{ class }}
+{
+    use Dispatchable;
+
+    public function __construct({{ parameters }})
+    {
+{{ body }}
+    }
+}

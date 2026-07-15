@@ -1,0 +1,22 @@
+<?php
+
+declare(strict_types=1);
+
+/**
+ * This file is managed by Laravel Process Builder.
+ * Manual changes may be overwritten.
+ */
+
+namespace {{ namespace }};
+
+use Tests\TestCase;
+
+final class {{ class }} extends TestCase
+{
+    public function test_{{ methodName }}(): void
+    {
+        $response = $this->{{ httpMethod }}('{{ uri }}'{{ payload }});
+
+        $response->assertStatus({{ expectedStatus }});
+    }
+}

@@ -1,0 +1,28 @@
+<?php
+
+declare(strict_types=1);
+
+/**
+ * This file is managed by Laravel Process Builder.
+ * Manual changes may be overwritten.
+ */
+
+namespace {{ namespace }};
+
+use Illuminate\Foundation\Http\FormRequest;
+
+final class {{ class }} extends FormRequest
+{
+    public function authorize(): bool
+    {
+        return {{ authorize }};
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function rules(): array
+    {
+        return {{ rules }};
+    }
+}

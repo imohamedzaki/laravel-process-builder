@@ -15,4 +15,14 @@ final class InvalidPreviewTokenException extends ProcessBuilderException
     {
         return new self('The preview confirmation token is invalid.');
     }
+
+    protected function httpStatus(): int
+    {
+        return 422;
+    }
+
+    protected function errorCode(): string
+    {
+        return 'process.invalid_preview_token';
+    }
 }
