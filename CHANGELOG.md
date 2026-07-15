@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-07-15
+
+### Fixed
+
+- CI/repo reproducibility: `package-lock.json` was gitignored, causing `npm ci` to fail on every fresh checkout; now committed (`composer.lock` stays ignored, as is standard for a library).
+- `workbench/bootstrap/cache/` and the entire `workbench/storage/` tree were untracked with no placeholders, so a clean clone was missing directories Laravel/Testbench require at boot (`view.compiled`, package manifest cache), breaking `composer install`, PHPStan/Larastan, and the PHPUnit suite on CI and for new contributors. Added `.gitkeep` placeholders to the required subdirectories.
+- `orchestra/testbench` was constrained to `^9.0 || ^10.0`, but no release in that range supports `laravel/framework ^13.0`, making the CI's PHP 8.3 / Laravel 13 matrix cell permanently unsatisfiable. Widened to `^9.0 || ^10.0 || ^11.0`.
+
+No installable package code changed in this release — these fixes only affect repository/CI reproducibility for contributors building from a fresh clone.
+
 ## [0.1.0] - 2026-07-15
 
 ### Added
@@ -27,5 +37,6 @@ All notable changes to this project will be documented in this file.
 - `BackupService`'s relative-path-to-filename encoding didn't escape `:`, silently truncating backup filenames for Windows absolute paths with a drive letter; fixed by escaping `:` alongside `/` and `\`.
 - `AuditLogger` threw when no default auth guard was configured (common in isolated/test apps); guard resolution failures are now treated as an anonymous audit entry instead of a hard failure.
 
-[Unreleased]: https://github.com/imohamedzaki/laravel-process-builder/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/imohamedzaki/laravel-process-builder/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/imohamedzaki/laravel-process-builder/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/imohamedzaki/laravel-process-builder/releases/tag/v0.1.0
