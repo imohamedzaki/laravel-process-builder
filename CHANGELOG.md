@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-07-15
+
 ### Added
 
 - **Package foundation** — composer.json, service provider, configuration, Testbench/Workbench wiring, dashboard route + Blade shell with a minimal React/TypeScript app, environment- and gate-based dashboard/API authorization middleware, core domain enums (`NodeType`, `ProcessStatus`, `ValidationSeverity`) and exception hierarchy.
@@ -25,4 +27,5 @@ All notable changes to this project will be documented in this file.
 - `BackupService`'s relative-path-to-filename encoding didn't escape `:`, silently truncating backup filenames for Windows absolute paths with a drive letter; fixed by escaping `:` alongside `/` and `\`.
 - `AuditLogger` threw when no default auth guard was configured (common in isolated/test apps); guard resolution failures are now treated as an anonymous audit entry instead of a hard failure.
 
-[Unreleased]: https://github.com/mohamedzaki/laravel-process-builder/compare/HEAD
+[Unreleased]: https://github.com/imohamedzaki/laravel-process-builder/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/imohamedzaki/laravel-process-builder/releases/tag/v0.1.0
