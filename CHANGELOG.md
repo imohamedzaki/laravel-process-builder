@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.1.2] - 2026-07-15
+
+### Fixed
+
+- `dist/` (the pre-built dashboard JS/CSS) was gitignored, so it was never included in tagged releases. Every fresh `composer require`/`vendor:publish --tag=process-builder-assets` on a Packagist install failed with `Can't locate path: .../dist` because the directory didn't exist in the installed package at all. `dist/` is now committed.
+- The dashboard Blade view checked for the package's own internal `dist/.vite/manifest.json` to decide whether to emit asset `<script>`/`<link>` tags, instead of checking whether assets had actually been published into the consuming app's `public/vendor/process-builder`. When unpublished, this silently emitted broken asset URLs with no visible error — a blank white page and no indication of what went wrong. The view now checks the real published path and renders an on-page message with the exact `vendor:publish` command when assets are missing and no Vite dev server is reachable.
+- `process-builder:install` now generates a dedicated `app/Providers/ProcessBuilderAuthServiceProvider.php` stub with the `manage-process-builder` gate pre-filled (denying everyone by default), since Laravel 11+ no longer ships an `AuthServiceProvider` by default and there was previously no guided path to defining the gate. The command prints the exact registration line for both `bootstrap/providers.php` (Laravel 11+) and `config/app.php` (Laravel ≤10). Existing provider files are never auto-edited.
+
 ## [0.1.1] - 2026-07-15
 
 ### Fixed
@@ -37,6 +45,7 @@ No installable package code changed in this release — these fixes only affect 
 - `BackupService`'s relative-path-to-filename encoding didn't escape `:`, silently truncating backup filenames for Windows absolute paths with a drive letter; fixed by escaping `:` alongside `/` and `\`.
 - `AuditLogger` threw when no default auth guard was configured (common in isolated/test apps); guard resolution failures are now treated as an anonymous audit entry instead of a hard failure.
 
-[Unreleased]: https://github.com/imohamedzaki/laravel-process-builder/compare/v0.1.1...HEAD
+[Unreleased]: https://github.com/imohamedzaki/laravel-process-builder/compare/v0.1.2...HEAD
+[0.1.2]: https://github.com/imohamedzaki/laravel-process-builder/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/imohamedzaki/laravel-process-builder/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/imohamedzaki/laravel-process-builder/releases/tag/v0.1.0
