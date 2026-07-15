@@ -1,6 +1,8 @@
 /vendor
 /node_modules
-/dist
+# dist/ is intentionally committed: Packagist/Composer installs of this
+# package do not run a JS build step, so the published dashboard assets
+# must already be present in the tagged source.
 tsconfig.tsbuildinfo
 /.phpunit.cache
 /.phpstan.cache
