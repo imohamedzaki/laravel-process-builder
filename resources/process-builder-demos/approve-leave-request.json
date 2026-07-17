@@ -5,6 +5,7 @@
     "description": "Approves or rejects a pending leave request: on approval, updates the record and queues a notification job; on rejection, returns an error response.",
     "status": "draft",
     "entryNodeId": "route_01",
+    "participants": [{"id":"participant_employee","name":"Employee","guard":"web","actorType":"human","order":0,"color":null}],
     "nodes": [
         {
             "id": "route_01",

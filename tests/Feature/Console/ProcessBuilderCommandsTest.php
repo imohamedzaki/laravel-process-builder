@@ -71,6 +71,7 @@ final class ProcessBuilderCommandsTest extends TestCase
         $process = ProcessDefinition::fromArray([
             'name' => 'Create Order',
             'slug' => 'create-order',
+            'participants' => [['id' => 'participant_web', 'name' => 'Web user', 'guard' => 'web', 'actorType' => 'human', 'order' => 0, 'color' => null]],
             'entryNodeId' => 'r1',
             'nodes' => [
                 ['id' => 'r1', 'type' => 'route', 'position' => ['x' => 0, 'y' => 0], 'data' => ['method' => 'POST', 'uri' => '/orders', 'name' => 'orders.store']],

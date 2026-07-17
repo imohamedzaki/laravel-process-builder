@@ -11,8 +11,8 @@ export function discoverGuards(summary: ProjectSummary | null): string[] {
     return names.size > 0 ? [...names].sort() : ['web'];
 }
 
-export function processGuard(process: ProcessDefinition): string | null {
-    return process.guard || process.description?.match(/\[guard:([^\]]+)]/)?.[1] || process.slug;
+export function participantGuards(process: ProcessDefinition): string[] {
+    return [...new Set(process.participants.map((participant) => participant.guard))].sort();
 }
 
 export function descriptionForGuard(guard: string): string {

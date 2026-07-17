@@ -3,7 +3,7 @@ import { Icon } from '@/components/Icon';
 import { NODE_ICONS, NODE_LABELS } from '@/palette/NodePalette';
 
 export function PropertyInspector(): JSX.Element {
-    const { nodes, lanes, selectedNodeId, updateNodeData, assignNodeToLane, removeNode } = useProcessEditorStore();
+    const { nodes, participants, selectedNodeId, updateNodeData, assignNodeToParticipant, removeNode } = useProcessEditorStore();
 
     const node = nodes.find((candidate) => candidate.id === selectedNodeId) ?? null;
 
@@ -27,20 +27,20 @@ export function PropertyInspector(): JSX.Element {
             <header className="pb-inspector-heading"><span className={`pb-palette-symbol pb-palette-symbol--${node.type}`}><Icon name={NODE_ICONS[node.type]} /></span><div><span className="pb-eyebrow">Selected component</span><h2>{NODE_LABELS[node.type]}</h2></div>{node.type !== 'start' ? <button type="button" className="pb-icon-button pb-icon-button--danger" onClick={() => removeNode(node.id)} aria-label={`Delete ${NODE_LABELS[node.type]}`}><Icon name="x" /></button> : <span className="pb-start-lock"><Icon name="shield" /></span>}</header>
             <div className="pb-inspector-id">{node.id}</div>
 
-            {lanes.length > 0 && (
-                <label htmlFor="inspector-lane">
-                    Lane
+            {participants.length > 0 && (
+                <label htmlFor="inspector-participant">
+                    Participant / guard
                     <select
-                        id="inspector-lane"
-                        value={(node.data.laneId as string) ?? ''}
-                        onChange={(event) => assignNodeToLane(node.id, event.target.value || null)}
+                        id="inspector-participant"
+                        value={(node.data.participantId as string) ?? ''}
+                        onChange={(event) => assignNodeToParticipant(node.id, event.target.value || null)}
                     >
                         <option value="">Unassigned</option>
-                        {[...lanes]
+                        {[...participants]
                             .sort((a, b) => a.order - b.order)
-                            .map((lane) => (
-                                <option key={lane.id} value={lane.id}>
-                                    {lane.name}
+                            .map((participant) => (
+                                <option key={participant.id} value={participant.id}>
+                                    {participant.name} · {participant.guard}
                                 </option>
                             ))}
                     </select>

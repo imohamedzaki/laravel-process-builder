@@ -43,12 +43,6 @@ final class ProcessController
             ], 409);
         }
 
-        $guard = $request->validated('guard') ?? $request->validated('slug');
-
-        if ($this->guardIsOwnedByAnotherProcess($guard)) {
-            return $this->guardTakenResponse();
-        }
-
         try {
             $process = ProcessDefinition::fromArray($request->validated());
         } catch (InvalidProcessDefinitionException $exception) {
@@ -94,12 +88,6 @@ final class ProcessController
             'version' => $existing->version,
             'metadata' => $existing->metadata->toArray(),
         ]);
-
-        $guard = is_string($payload['guard'] ?? null) ? $payload['guard'] : $payload['slug'];
-
-        if ($this->guardIsOwnedByAnotherProcess($guard, $existing->id)) {
-            return $this->guardTakenResponse();
-        }
 
         try {
             $updated = ProcessDefinition::fromArray($payload)->withIncrementedVersion();
@@ -154,7 +142,6 @@ final class ProcessController
         $payload = array_merge($existing->toArray(), [
             'id' => null,
             'slug' => $newSlug,
-            'guard' => $newSlug,
             'name' => $existing->name.' (Copy)',
             'version' => 1,
             'status' => 'draft',
@@ -194,23 +181,4 @@ final class ProcessController
         ], 422);
     }
 
-    private function guardIsOwnedByAnotherProcess(string $guard, ?string $exceptProcessId = null): bool
-    {
-        foreach ($this->repository->all() as $process) {
-            if ($process->guard === $guard && $process->id !== $exceptProcessId) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    private function guardTakenResponse(): JsonResponse
-    {
-        return response()->json([
-            'data' => null,
-            'meta' => [],
-            'errors' => [['code' => 'process.guard_taken', 'message' => 'A process already owns this guard.']],
-        ], 409);
-    }
 }

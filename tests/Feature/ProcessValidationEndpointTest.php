@@ -48,6 +48,7 @@ final class ProcessValidationEndpointTest extends TestCase
         $this->postJson('/process-builder/api/processes', [
             'name' => 'Create Order',
             'slug' => 'create-order',
+            'participants' => [['id' => 'participant_web', 'name' => 'Web user', 'guard' => 'web', 'actorType' => 'human', 'order' => 0, 'color' => null]],
             'entryNodeId' => 'r1',
             'nodes' => [
                 ['id' => 'r1', 'type' => 'route', 'position' => ['x' => 0, 'y' => 0], 'data' => ['method' => 'POST', 'uri' => '/orders', 'name' => 'orders.store']],

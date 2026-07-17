@@ -6,33 +6,32 @@ namespace MohamedZaki\LaravelProcessBuilder\Domain\Processes;
 
 use DateTimeImmutable;
 use MohamedZaki\LaravelProcessBuilder\Domain\Edges\ProcessEdge;
-use MohamedZaki\LaravelProcessBuilder\Domain\Lanes\ProcessLane;
 use MohamedZaki\LaravelProcessBuilder\Domain\Nodes\ProcessNode;
+use MohamedZaki\LaravelProcessBuilder\Domain\Participants\ProcessParticipant;
 use MohamedZaki\LaravelProcessBuilder\Enums\ProcessStatus;
 use MohamedZaki\LaravelProcessBuilder\Exceptions\InvalidProcessDefinitionException;
 
 final class ProcessDefinition
 {
-    public const SCHEMA_VERSION = '1.2';
+    public const SCHEMA_VERSION = '1.3';
 
     /**
      * @param  list<ProcessNode>  $nodes
      * @param  list<ProcessEdge>  $edges
-     * @param  list<ProcessLane>  $lanes
+     * @param  list<ProcessParticipant>  $participants
      */
     public function __construct(
         public readonly string $schemaVersion,
         public readonly string $id,
         public readonly string $name,
         public readonly string $slug,
-        public readonly string $guard,
         public readonly ?string $description,
         public readonly int $version,
         public readonly ProcessStatus $status,
         public readonly ?string $entryNodeId,
         public readonly array $nodes,
         public readonly array $edges,
-        public readonly array $lanes,
+        public readonly array $participants,
         public readonly ProcessMetadata $metadata,
     ) {
     }
@@ -54,10 +53,6 @@ final class ProcessDefinition
             $errors[] = 'The process "slug" must be kebab-case (lowercase letters, numbers, hyphens).';
         }
 
-        if (isset($payload['guard']) && (! is_string($payload['guard']) || preg_match('/^[a-z0-9]+(?:[._-][a-z0-9]+)*$/', $payload['guard']) !== 1)) {
-            $errors[] = 'The process "guard" must be a lowercase guard identifier.';
-        }
-
         if ($errors !== []) {
             throw InvalidProcessDefinitionException::withErrors($errors);
         }
@@ -70,33 +65,34 @@ final class ProcessDefinition
         /** @var list<array<string, mixed>> $edgePayloads */
         $edgePayloads = is_array($payload['edges'] ?? null) ? array_values($payload['edges']) : [];
 
-        /** @var list<array<string, mixed>> $lanePayloads */
-        $lanePayloads = is_array($payload['lanes'] ?? null) ? array_values($payload['lanes']) : [];
+        /** @var list<array<string, mixed>> $participantPayloads */
+        $participantPayloads = is_array($payload['participants'] ?? null)
+            ? array_values($payload['participants'])
+            : self::migrateLegacyLanes($payload);
+
+        $nodePayloads = self::migrateLegacyNodeAssignments($nodePayloads, $participantPayloads);
 
         /** @var array<string, mixed> $metadataPayload */
         $metadataPayload = is_array($payload['metadata'] ?? null) ? $payload['metadata'] : [];
 
-        $nodes = array_map(ProcessNode::fromArray(...), $nodePayloads);
-        $edges = array_map(ProcessEdge::fromArray(...), $edgePayloads);
-        $lanes = array_map(ProcessLane::fromArray(...), $lanePayloads);
+        $nodes = array_values(array_map(ProcessNode::fromArray(...), $nodePayloads));
+        $edges = array_values(array_map(ProcessEdge::fromArray(...), $edgePayloads));
+        $participants = array_values(array_map(ProcessParticipant::fromArray(...), $participantPayloads));
 
-        self::assertUniqueIds($nodes, $edges, $lanes);
+        self::assertUniqueIds($nodes, $edges, $participants);
 
         return new self(
-            schemaVersion: is_string($payload['schemaVersion'] ?? null) ? $payload['schemaVersion'] : self::SCHEMA_VERSION,
+            schemaVersion: self::SCHEMA_VERSION,
             id: is_string($payload['id'] ?? null) && $payload['id'] !== '' ? $payload['id'] : self::generateId(),
             name: $payload['name'],
             slug: $payload['slug'],
-            guard: isset($payload['guard']) && is_string($payload['guard']) && trim($payload['guard']) !== ''
-                ? $payload['guard']
-                : $payload['slug'],
             description: isset($payload['description']) && is_string($payload['description']) ? $payload['description'] : null,
             version: is_int($payload['version'] ?? null) ? $payload['version'] : 1,
             status: $status,
             entryNodeId: isset($payload['entryNodeId']) && is_string($payload['entryNodeId']) ? $payload['entryNodeId'] : null,
             nodes: $nodes,
             edges: $edges,
-            lanes: $lanes,
+            participants: $participants,
             metadata: ProcessMetadata::fromArray($metadataPayload),
         );
     }
@@ -104,9 +100,9 @@ final class ProcessDefinition
     /**
      * @param  list<ProcessNode>  $nodes
      * @param  list<ProcessEdge>  $edges
-     * @param  list<ProcessLane>  $lanes
+     * @param  list<ProcessParticipant>  $participants
      */
-    private static function assertUniqueIds(array $nodes, array $edges, array $lanes): void
+    private static function assertUniqueIds(array $nodes, array $edges, array $participants): void
     {
         $errors = [];
 
@@ -122,10 +118,15 @@ final class ProcessDefinition
             $errors[] = 'Edge ids must be unique.';
         }
 
-        $laneIds = array_map(static fn (ProcessLane $lane): string => $lane->id, $lanes);
+        $participantIds = array_map(static fn (ProcessParticipant $participant): string => $participant->id, $participants);
 
-        if (count($laneIds) !== count(array_unique($laneIds))) {
-            $errors[] = 'Lane ids must be unique.';
+        if (count($participantIds) !== count(array_unique($participantIds))) {
+            $errors[] = 'Participant ids must be unique.';
+        }
+
+        $guards = array_map(static fn (ProcessParticipant $participant): string => $participant->guard, $participants);
+        if (count($guards) !== count(array_unique($guards))) {
+            $errors[] = 'Participant guards must be unique within a process.';
         }
 
         $knownNodeIds = array_flip($nodeIds);
@@ -156,11 +157,11 @@ final class ProcessDefinition
         return null;
     }
 
-    public function laneById(string $id): ?ProcessLane
+    public function participantById(string $id): ?ProcessParticipant
     {
-        foreach ($this->lanes as $lane) {
-            if ($lane->id === $id) {
-                return $lane;
+        foreach ($this->participants as $participant) {
+            if ($participant->id === $id) {
+                return $participant;
             }
         }
 
@@ -174,14 +175,13 @@ final class ProcessDefinition
             $this->id,
             $this->name,
             $this->slug,
-            $this->guard,
             $this->description,
             $this->version + 1,
             $this->status,
             $this->entryNodeId,
             $this->nodes,
             $this->edges,
-            $this->lanes,
+            $this->participants,
             $this->metadata->withUpdatedNow(),
         );
     }
@@ -193,14 +193,13 @@ final class ProcessDefinition
             $this->id,
             $this->name,
             $this->slug,
-            $this->guard,
             $this->description,
             $this->version,
             ProcessStatus::Generated,
             $this->entryNodeId,
             $this->nodes,
             $this->edges,
-            $this->lanes,
+            $this->participants,
             $this->metadata->withGenerated(new DateTimeImmutable(), $generatorVersion),
         );
     }
@@ -215,14 +214,13 @@ final class ProcessDefinition
             'id' => $this->id,
             'name' => $this->name,
             'slug' => $this->slug,
-            'guard' => $this->guard,
             'description' => $this->description,
             'version' => $this->version,
             'status' => $this->status->value,
             'entryNodeId' => $this->entryNodeId,
             'nodes' => array_map(static fn (ProcessNode $node): array => $node->toArray(), $this->nodes),
             'edges' => array_map(static fn (ProcessEdge $edge): array => $edge->toArray(), $this->edges),
-            'lanes' => array_map(static fn (ProcessLane $lane): array => $lane->toArray(), $this->lanes),
+            'participants' => array_map(static fn (ProcessParticipant $participant): array => $participant->toArray(), $this->participants),
             'metadata' => $this->metadata->toArray(),
         ];
     }
@@ -230,5 +228,46 @@ final class ProcessDefinition
     private static function generateId(): string
     {
         return strtoupper(bin2hex(random_bytes(13)));
+    }
+
+    /**
+     * @param  array<string, mixed>  $payload
+     * @return list<array<string, mixed>>
+     */
+    private static function migrateLegacyLanes(array $payload): array
+    {
+        if (! is_array($payload['lanes'] ?? null)) {
+            return [];
+        }
+
+        return array_map(static function (mixed $lane) use ($payload): array {
+            $lane = is_array($lane) ? $lane : [];
+            $fallback = strtolower((string) ($lane['name'] ?? $payload['guard'] ?? 'participant'));
+            $guard = preg_replace('/[^a-z0-9]+/', '-', $fallback) ?? 'participant';
+
+            return array_merge($lane, ['guard' => trim($guard, '-') ?: 'participant']);
+        }, array_values($payload['lanes']));
+    }
+
+    /**
+     * @param  list<array<string, mixed>>  $nodes
+     * @param  list<array<string, mixed>>  $participants
+     * @return list<array<string, mixed>>
+     */
+    private static function migrateLegacyNodeAssignments(array $nodes, array $participants): array
+    {
+        $onlyParticipantId = count($participants) === 1 && is_string($participants[0]['id'] ?? null) ? $participants[0]['id'] : null;
+
+        return array_map(static function (array $node) use ($onlyParticipantId): array {
+            if (is_array($node['data'] ?? null) && ! isset($node['data']['participantId']) && isset($node['data']['laneId'])) {
+                $node['data']['participantId'] = $node['data']['laneId'];
+                unset($node['data']['laneId']);
+            }
+            if (is_array($node['data'] ?? null) && ! isset($node['data']['participantId']) && $onlyParticipantId !== null) {
+                $node['data']['participantId'] = $onlyParticipantId;
+            }
+
+            return $node;
+        }, $nodes);
     }
 }

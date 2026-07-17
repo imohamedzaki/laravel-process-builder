@@ -1,38 +1,41 @@
 import { useViewport } from '@xyflow/react';
-import { LANE_BAND_HEIGHT } from '@/nodes/LaneBandNode';
-import type { ProcessLane } from '@/types/process';
+import type { ParticipantLayout } from '@/canvas/participantLayout';
+import type { ProcessParticipant } from '@/types/process';
 
 interface SwimlaneHeadersProps {
-    lanes: ProcessLane[];
+    participants: ProcessParticipant[];
+    layouts: ParticipantLayout[];
 }
 
 const LANE_HEADER_WIDTH = 160;
 
-export function SwimlaneHeaders({ lanes }: SwimlaneHeadersProps): JSX.Element | null {
+export function SwimlaneHeaders({ participants, layouts }: SwimlaneHeadersProps): JSX.Element | null {
     const { y: viewportY, zoom } = useViewport();
 
-    if (lanes.length === 0) {
+    if (participants.length === 0) {
         return null;
     }
 
-    const sortedLanes = [...lanes].sort((a, b) => a.order - b.order);
+    const sortedParticipants = [...participants].sort((a, b) => a.order - b.order);
 
     return (
         <div className="pb-lane-headers" style={{ width: LANE_HEADER_WIDTH }}>
-            {sortedLanes.map((lane, index) => {
-                const top = viewportY + index * LANE_BAND_HEIGHT * zoom;
-                const height = LANE_BAND_HEIGHT * zoom;
+            {sortedParticipants.map((participant) => {
+                const layout = layouts.find((item) => item.id === participant.id);
+                if (!layout) return null;
+                const top = viewportY + layout.top * zoom;
+                const height = layout.height * zoom;
 
                 return (
                     <div
-                        key={lane.id}
+                        key={participant.id}
                         className="pb-lane-header"
-                        style={{ top, height, background: lane.color ?? undefined }}
+                        style={{ top, height, background: participant.color ?? undefined }}
                     >
                         <span className="pb-lane-header-icon" aria-hidden="true">
-                            {lane.actorType === 'system' ? '⚙' : '☺'}
+                            {participant.actorType === 'system' ? '⚙' : '◉'}
                         </span>
-                        <span className="pb-lane-header-name">{lane.name}</span>
+                        <span className="pb-lane-header-name">{participant.name}<small>{participant.guard}</small></span>
                     </div>
                 );
             })}

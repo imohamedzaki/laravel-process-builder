@@ -63,6 +63,7 @@ final class ProcessGenerateEndpointTest extends TestCase
         $this->postJson('/process-builder/api/processes', [
             'name' => 'Create Order',
             'slug' => 'create-order',
+            'participants' => [['id' => 'participant_web', 'name' => 'Web user', 'guard' => 'web', 'actorType' => 'human', 'order' => 0, 'color' => null]],
             'entryNodeId' => 'start1',
             'nodes' => [
                 ['id' => 'start1', 'type' => 'start', 'position' => ['x' => -1, 'y' => 0], 'data' => ['label' => 'create-order guard']],

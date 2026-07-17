@@ -5,12 +5,11 @@ import type { ProcessDefinition, ValidationResult } from '@/types/process';
 export interface CreateProcessPayload {
     name: string;
     slug: string;
-    guard?: string;
     description?: string | null;
     entryNodeId?: string | null;
     nodes?: ProcessDefinition['nodes'];
     edges?: ProcessDefinition['edges'];
-    lanes?: ProcessDefinition['lanes'];
+    participants?: ProcessDefinition['participants'];
 }
 
 export type UpdateProcessPayload = CreateProcessPayload;

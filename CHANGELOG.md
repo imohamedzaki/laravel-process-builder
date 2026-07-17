@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-07-17
+
+### Changed
+
+- **Renamed swimlanes to participants** — `ProcessDefinition::$lanes` is now `$participants` (`ProcessLane` → `ProcessParticipant`), and the top-level process `guard` field has moved down onto each participant (`ProcessParticipant::$guard`), since a guard identifies who acts within a process rather than the process itself. Schema version bumped to `1.3`. Process definitions saved under the old `lanes`/top-level `guard` shape (schema `1.2` and earlier) are migrated automatically on load, including reassigning each node's `laneId` to the equivalent `participantId`.
+- `LaneReferenceRule` is now `ParticipantReferenceRule`; `LaneManager.tsx` is now `ParticipantManager.tsx`.
+- Removed process-level guard-uniqueness checks from `ProcessController` (create/update/duplicate) now that guards live on participants instead of the process itself.
+
 ## [0.1.2] - 2026-07-15
 
 ### Fixed

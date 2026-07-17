@@ -5,6 +5,7 @@
     "description": "Creates a new customer order: validates the request, persists the order, fires an event, and returns the created resource.",
     "status": "draft",
     "entryNodeId": "route_01",
+    "participants": [{"id":"participant_customer","name":"Customer","guard":"web","actorType":"human","order":0,"color":null}],
     "nodes": [
         {
             "id": "route_01",

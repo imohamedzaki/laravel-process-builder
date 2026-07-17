@@ -6,11 +6,11 @@ namespace MohamedZaki\LaravelProcessBuilder\Tests\Unit\Validation;
 
 use MohamedZaki\LaravelProcessBuilder\Domain\Processes\ProcessDefinition;
 use MohamedZaki\LaravelProcessBuilder\Tests\TestCase;
-use MohamedZaki\LaravelProcessBuilder\Validation\Rules\LaneReferenceRule;
+use MohamedZaki\LaravelProcessBuilder\Validation\Rules\ParticipantReferenceRule;
 
 final class LaneReferenceRuleTest extends TestCase
 {
-    public function test_it_is_valid_when_process_has_no_lanes(): void
+    public function test_it_requires_a_participant(): void
     {
         $process = ProcessDefinition::fromArray([
             'name' => 'No Lanes',
@@ -20,10 +20,10 @@ final class LaneReferenceRuleTest extends TestCase
             ],
         ]);
 
-        $result = (new LaneReferenceRule())->validate($process);
+        $result = (new ParticipantReferenceRule())->validate($process);
 
-        $this->assertTrue($result->isValid());
-        $this->assertSame([], $result->warnings());
+        $this->assertFalse($result->isValid());
+        $this->assertSame('participant.required', $result->errors()[0]->code);
     }
 
     public function test_it_is_valid_when_node_has_no_lane_assignment(): void
@@ -31,15 +31,15 @@ final class LaneReferenceRuleTest extends TestCase
         $process = ProcessDefinition::fromArray([
             'name' => 'Unassigned',
             'slug' => 'unassigned',
-            'lanes' => [
-                ['id' => 'lane_1', 'name' => 'Manager', 'actorType' => 'human', 'order' => 0, 'color' => null],
+            'participants' => [
+                ['id' => 'participant_manager', 'name' => 'Manager', 'guard' => 'manager', 'actorType' => 'human', 'order' => 0, 'color' => null],
             ],
             'nodes' => [
                 ['id' => 'n1', 'type' => 'route', 'position' => [], 'data' => []],
             ],
         ]);
 
-        $result = (new LaneReferenceRule())->validate($process);
+        $result = (new ParticipantReferenceRule())->validate($process);
 
         $this->assertTrue($result->isValid());
         $this->assertSame([], $result->warnings());
@@ -50,38 +50,39 @@ final class LaneReferenceRuleTest extends TestCase
         $process = ProcessDefinition::fromArray([
             'name' => 'Valid Lane',
             'slug' => 'valid-lane',
-            'lanes' => [
-                ['id' => 'lane_1', 'name' => 'Manager', 'actorType' => 'human', 'order' => 0, 'color' => null],
+            'participants' => [
+                ['id' => 'participant_manager', 'name' => 'Manager', 'guard' => 'manager', 'actorType' => 'human', 'order' => 0, 'color' => null],
+                ['id' => 'participant_system', 'name' => 'System', 'guard' => 'system', 'actorType' => 'system', 'order' => 1, 'color' => null],
             ],
             'nodes' => [
-                ['id' => 'n1', 'type' => 'route', 'position' => [], 'data' => ['laneId' => 'lane_1']],
+                ['id' => 'n1', 'type' => 'route', 'position' => [], 'data' => ['participantId' => 'participant_manager']],
             ],
         ]);
 
-        $result = (new LaneReferenceRule())->validate($process);
+        $result = (new ParticipantReferenceRule())->validate($process);
 
         $this->assertTrue($result->isValid());
         $this->assertSame([], $result->warnings());
     }
 
-    public function test_it_warns_but_does_not_error_on_an_unknown_lane_reference(): void
+    public function test_it_errors_on_an_unknown_participant_reference(): void
     {
         $process = ProcessDefinition::fromArray([
             'name' => 'Bad Lane',
             'slug' => 'bad-lane',
-            'lanes' => [
-                ['id' => 'lane_1', 'name' => 'Manager', 'actorType' => 'human', 'order' => 0, 'color' => null],
+            'participants' => [
+                ['id' => 'participant_manager', 'name' => 'Manager', 'guard' => 'manager', 'actorType' => 'human', 'order' => 0, 'color' => null],
+                ['id' => 'participant_system', 'name' => 'System', 'guard' => 'system', 'actorType' => 'system', 'order' => 1, 'color' => null],
             ],
             'nodes' => [
-                ['id' => 'n1', 'type' => 'route', 'position' => [], 'data' => ['laneId' => 'does-not-exist']],
+                ['id' => 'n1', 'type' => 'route', 'position' => [], 'data' => ['participantId' => 'does-not-exist']],
             ],
         ]);
 
-        $result = (new LaneReferenceRule())->validate($process);
+        $result = (new ParticipantReferenceRule())->validate($process);
 
-        $this->assertTrue($result->isValid());
-        $this->assertCount(1, $result->warnings());
-        $this->assertSame('lane.unknown_reference', $result->warnings()[0]->code);
-        $this->assertSame('n1', $result->warnings()[0]->nodeId);
+        $this->assertFalse($result->isValid());
+        $this->assertSame('participant.unassigned_node', $result->errors()[0]->code);
+        $this->assertSame('n1', $result->errors()[0]->nodeId);
     }
 }

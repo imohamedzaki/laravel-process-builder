@@ -4,7 +4,7 @@ export type IconName =
     | 'activity' | 'arrow-left' | 'box' | 'check' | 'chevron-down' | 'code'
     | 'command' | 'controller' | 'database' | 'diamond' | 'file' | 'git-branch'
     | 'layers' | 'moon' | 'play' | 'plus' | 'refresh' | 'route' | 'search'
-    | 'settings' | 'shield' | 'sun' | 'terminal' | 'undo' | 'redo' | 'x' | 'zap';
+    | 'settings' | 'shield' | 'sun' | 'terminal' | 'trash' | 'undo' | 'redo' | 'users' | 'x' | 'zap';
 
 const paths: Record<IconName, JSX.Element> = {
     activity: <><path d="M4 12h3l2-6 4 12 2-6h5" /></>,
@@ -30,8 +30,10 @@ const paths: Record<IconName, JSX.Element> = {
     shield: <><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z" /><path d="m9 12 2 2 4-4" /></>,
     sun: <><circle cx="12" cy="12" r="4" /><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" /></>,
     terminal: <><path d="m4 6 5 5-5 5M11 18h9" /></>,
+    trash: <><path d="M4 7h16M9 7V4h6v3M7 7l1 14h8l1-14M10 11v6M14 11v6" /></>,
     undo: <><path d="m9 7-5 5 5 5" /><path d="M5 12h9a6 6 0 0 1 6 6" /></>,
     redo: <><path d="m15 7 5 5-5 5" /><path d="M19 12h-9a6 6 0 0 0-6 6" /></>,
+    users: <><circle cx="9" cy="8" r="3" /><path d="M3 20v-2a6 6 0 0 1 12 0v2M16 5a3 3 0 0 1 0 6M17 14a5 5 0 0 1 4 5v1" /></>,
     x: <><path d="m6 6 12 12M18 6 6 18" /></>,
     zap: <path d="m13 2-9 12h8l-1 8 9-12h-8Z" />,
 };

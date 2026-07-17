@@ -1,19 +1,20 @@
 import { create } from 'zustand';
 import { createProcess, fetchProcess, updateProcess, validateProcess } from '@/api/processes';
-import type { ProcessDefinition, ProcessEdge, ProcessLane, ProcessNode, ValidationResult } from '@/types/process';
+import type { ProcessDefinition, ProcessEdge, ProcessNode, ProcessParticipant, ValidationResult } from '@/types/process';
 import { shouldReverseConnection } from '@/canvas/connectionRules';
+import { normalizeParticipantPositions } from '@/canvas/participantLayout';
 
 interface HistoryEntry {
     nodes: ProcessNode[];
     edges: ProcessEdge[];
-    lanes: ProcessLane[];
+    participants: ProcessParticipant[];
 }
 
 interface ProcessEditorState {
     process: ProcessDefinition | null;
     nodes: ProcessNode[];
     edges: ProcessEdge[];
-    lanes: ProcessLane[];
+    participants: ProcessParticipant[];
     selectedNodeId: string | null;
     isDirty: boolean;
     isLoading: boolean;
@@ -40,23 +41,21 @@ interface ProcessEditorState {
     addEdge: (edge: ProcessEdge) => void;
     removeEdge: (edgeId: string) => void;
 
-    addLane: (lane: ProcessLane) => void;
-    updateLane: (laneId: string, changes: Partial<Omit<ProcessLane, 'id'>>) => void;
-    removeLane: (laneId: string) => void;
-    assignNodeToLane: (nodeId: string, laneId: string | null) => void;
+    addParticipant: (participant: ProcessParticipant) => void;
+    updateParticipant: (participantId: string, changes: Partial<Omit<ProcessParticipant, 'id'>>) => void;
+    removeParticipant: (participantId: string) => void;
+    assignNodeToParticipant: (nodeId: string, participantId: string | null) => void;
 
     undo: () => void;
     redo: () => void;
 }
 
 function snapshot(state: ProcessEditorState): HistoryEntry {
-    return { nodes: state.nodes, edges: state.edges, lanes: state.lanes };
+    return { nodes: state.nodes, edges: state.edges, participants: state.participants };
 }
 
 function withRequiredStart(process: ProcessDefinition): ProcessDefinition {
-    const base = process.schemaVersion === '1.2' && process.guard
-        ? process
-        : { ...process, schemaVersion: '1.2', guard: process.guard || process.slug };
+    const base = { ...process, schemaVersion: '1.3' };
     const nodeTypes = new Map(base.nodes.map((node) => [node.id, node.type]));
     const normalizedEdges = base.edges.map((edge) => {
         const sourceType = nodeTypes.get(edge.source);
@@ -65,9 +64,13 @@ function withRequiredStart(process: ProcessDefinition): ProcessDefinition {
         return { ...edge, source: edge.target, sourceHandle: targetType === 'condition' ? edge.targetHandle : 'output', target: edge.source, targetHandle: 'input' };
     });
     const normalizedBase = normalizedEdges.some((edge, index) => edge !== base.edges[index]) ? { ...base, edges: normalizedEdges } : base;
+    if (normalizedBase.participants.length === 0) return normalizedBase;
+    const firstParticipant = [...normalizedBase.participants].sort((a, b) => a.order - b.order)[0]!;
     const existingStart = normalizedBase.nodes.find((node) => node.type === 'start');
     if (existingStart) {
-        return normalizedBase.entryNodeId === existingStart.id ? normalizedBase : { ...normalizedBase, entryNodeId: existingStart.id };
+        const nodes = existingStart.data.participantId ? normalizedBase.nodes : normalizedBase.nodes.map((node) => node.id === existingStart.id ? { ...node, data: { ...node.data, participantId: firstParticipant.id } } : node);
+        const processWithStart = { ...normalizedBase, nodes, entryNodeId: existingStart.id };
+        return { ...processWithStart, nodes: normalizeParticipantPositions(processWithStart.participants, processWithStart.nodes) };
     }
 
     const previousEntry = process.nodes.find((node) => node.id === process.entryNodeId) ?? process.nodes[0];
@@ -76,18 +79,19 @@ function withRequiredStart(process: ProcessDefinition): ProcessDefinition {
         id: startId,
         type: 'start',
         position: previousEntry ? { x: previousEntry.position.x - 230, y: previousEntry.position.y } : { x: 80, y: 180 },
-        data: { label: `${process.guard || process.slug} guard` },
+        data: { label: 'Start', participantId: firstParticipant.id },
     };
     const edge = previousEntry ? [{ id: `edge_${startId}_${previousEntry.id}`, source: startId, sourceHandle: 'output', target: previousEntry.id, targetHandle: 'input', label: null }] : [];
 
-    return { ...normalizedBase, entryNodeId: startId, nodes: [start, ...process.nodes], edges: [...edge, ...normalizedEdges] };
+    const processWithStart = { ...normalizedBase, entryNodeId: startId, nodes: [start, ...process.nodes], edges: [...edge, ...normalizedEdges] };
+    return { ...processWithStart, nodes: normalizeParticipantPositions(processWithStart.participants, processWithStart.nodes) };
 }
 
 export const useProcessEditorStore = create<ProcessEditorState>((set, get) => ({
     process: null,
     nodes: [],
     edges: [],
-    lanes: [],
+    participants: [],
     selectedNodeId: null,
     isDirty: false,
     isLoading: false,
@@ -108,7 +112,7 @@ export const useProcessEditorStore = create<ProcessEditorState>((set, get) => ({
                 process,
                 nodes: process.nodes,
                 edges: process.edges,
-                lanes: process.lanes,
+                participants: process.participants,
                 isLoading: false,
                 isDirty: process !== fetched,
                 past: [],
@@ -126,7 +130,7 @@ export const useProcessEditorStore = create<ProcessEditorState>((set, get) => ({
             process: normalized,
             nodes: normalized.nodes,
             edges: normalized.edges,
-            lanes: normalized.lanes,
+            participants: normalized.participants,
             isDirty: normalized !== process,
             past: [],
             future: [],
@@ -137,28 +141,24 @@ export const useProcessEditorStore = create<ProcessEditorState>((set, get) => ({
 
     createDraft: (name, slug, description = null) => {
         const now = new Date().toISOString();
-        const startId = `start_${slug}`;
-        const startNode: ProcessNode = { id: startId, type: 'start', position: { x: 80, y: 180 }, data: { label: `${slug} guard` } };
-
         set({
             process: {
-                schemaVersion: '1.2',
+                schemaVersion: '1.3',
                 id: '',
                 name,
                 slug,
-                guard: slug,
                 description,
                 version: 0,
                 status: 'draft',
-                entryNodeId: startId,
-                nodes: [startNode],
+                entryNodeId: null,
+                nodes: [],
                 edges: [],
-                lanes: [],
+                participants: [],
                 metadata: { createdAt: now, updatedAt: now, generatedAt: null, generatorVersion: null },
             },
-            nodes: [startNode],
+            nodes: [],
             edges: [],
-            lanes: [],
+            participants: [],
             isDirty: false,
             past: [],
             future: [],
@@ -168,7 +168,7 @@ export const useProcessEditorStore = create<ProcessEditorState>((set, get) => ({
     },
 
     save: async () => {
-        const { process, nodes, edges, lanes } = get();
+        const { process, nodes, edges, participants } = get();
 
         if (process === null) {
             return;
@@ -179,12 +179,11 @@ export const useProcessEditorStore = create<ProcessEditorState>((set, get) => ({
         const payload = {
             name: process.name,
             slug: process.slug,
-            guard: process.guard ?? process.slug,
             description: process.description,
             entryNodeId: process.entryNodeId,
             nodes,
             edges,
-            lanes,
+            participants,
         };
 
         try {
@@ -196,7 +195,7 @@ export const useProcessEditorStore = create<ProcessEditorState>((set, get) => ({
                 process: saved,
                 nodes: saved.nodes,
                 edges: saved.edges,
-                lanes: saved.lanes,
+                participants: saved.participants,
                 isSaving: false,
                 isDirty: false,
             });
@@ -293,32 +292,42 @@ export const useProcessEditorStore = create<ProcessEditorState>((set, get) => ({
         });
     },
 
-    addLane: (lane) => {
+    addParticipant: (participant) => {
         const state = get();
+        const isFirst = state.participants.length === 0;
+        const existingStart = state.nodes.find((node) => node.type === 'start');
+        const startId = existingStart?.id ?? `start_${state.process?.slug ?? 'process'}`;
+        const startNode: ProcessNode = { id: startId, type: 'start', position: { x: 80, y: 80 }, data: { label: 'Start', participantId: participant.id } };
+        const firstParticipantNodes = existingStart
+            ? state.nodes.map((node) => node.id === existingStart.id ? { ...node, data: { ...node.data, participantId: participant.id } } : node)
+            : [startNode, ...state.nodes];
         set({
-            lanes: [...state.lanes, lane],
+            participants: [...state.participants, participant],
+            nodes: isFirst ? firstParticipantNodes : state.nodes,
+            process: isFirst && state.process ? { ...state.process, entryNodeId: startId } : state.process,
             past: [...state.past, snapshot(state)],
             future: [],
             isDirty: true,
         });
     },
 
-    updateLane: (laneId, changes) => {
+    updateParticipant: (participantId, changes) => {
         const state = get();
         set({
-            lanes: state.lanes.map((lane) => (lane.id === laneId ? { ...lane, ...changes } : lane)),
+            participants: state.participants.map((participant) => (participant.id === participantId ? { ...participant, ...changes } : participant)),
             past: [...state.past, snapshot(state)],
             future: [],
             isDirty: true,
         });
     },
 
-    removeLane: (laneId) => {
+    removeParticipant: (participantId) => {
         const state = get();
+        if (state.participants.length === 1) return;
         set({
-            lanes: state.lanes.filter((lane) => lane.id !== laneId),
+            participants: state.participants.filter((participant) => participant.id !== participantId),
             nodes: state.nodes.map((node) =>
-                node.data.laneId === laneId ? { ...node, data: { ...node.data, laneId: null } } : node,
+                node.data.participantId === participantId ? { ...node, data: { ...node.data, participantId: null } } : node,
             ),
             past: [...state.past, snapshot(state)],
             future: [],
@@ -326,11 +335,11 @@ export const useProcessEditorStore = create<ProcessEditorState>((set, get) => ({
         });
     },
 
-    assignNodeToLane: (nodeId, laneId) => {
+    assignNodeToParticipant: (nodeId, participantId) => {
         const state = get();
         set({
             nodes: state.nodes.map((node) =>
-                node.id === nodeId ? { ...node, data: { ...node.data, laneId } } : node,
+                node.id === nodeId ? { ...node, data: { ...node.data, participantId } } : node,
             ),
             isDirty: true,
         });
@@ -347,7 +356,7 @@ export const useProcessEditorStore = create<ProcessEditorState>((set, get) => ({
         set({
             nodes: previous.nodes,
             edges: previous.edges,
-            lanes: previous.lanes,
+            participants: previous.participants,
             past: state.past.slice(0, -1),
             future: [snapshot(state), ...state.future],
             isDirty: true,
@@ -365,7 +374,7 @@ export const useProcessEditorStore = create<ProcessEditorState>((set, get) => ({
         set({
             nodes: next.nodes,
             edges: next.edges,
-            lanes: next.lanes,
+            participants: next.participants,
             past: [...state.past, snapshot(state)],
             future: state.future.slice(1),
             isDirty: true,

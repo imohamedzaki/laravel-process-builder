@@ -42,7 +42,7 @@ final class ProcessCrudEndpointsTest extends TestCase
 
         $response->assertCreated();
         $response->assertJsonPath('data.slug', 'create-order');
-        $response->assertJsonPath('data.guard', 'create-order');
+        $response->assertJsonPath('data.participants', []);
         $response->assertJsonPath('data.version', 1);
     }
 
@@ -55,13 +55,14 @@ final class ProcessCrudEndpointsTest extends TestCase
         $response->assertStatus(409);
     }
 
-    public function test_it_rejects_assigning_the_same_guard_to_two_processes(): void
+    public function test_the_same_guard_can_participate_in_multiple_processes(): void
     {
-        $this->postJson('/process-builder/api/processes', ['name' => 'A', 'slug' => 'a', 'guard' => 'shared'])->assertCreated();
+        $participant = [['id' => 'shared', 'name' => 'Shared', 'guard' => 'web', 'actorType' => 'human', 'order' => 0]];
+        $this->postJson('/process-builder/api/processes', ['name' => 'A', 'slug' => 'a', 'participants' => $participant])->assertCreated();
 
-        $this->postJson('/process-builder/api/processes', ['name' => 'B', 'slug' => 'b', 'guard' => 'shared'])
-            ->assertStatus(409)
-            ->assertJsonPath('errors.0.code', 'process.guard_taken');
+        $this->postJson('/process-builder/api/processes', ['name' => 'B', 'slug' => 'b', 'participants' => $participant])
+            ->assertCreated()
+            ->assertJsonPath('data.participants.0.guard', 'web');
     }
 
     public function test_it_validates_required_fields(): void

@@ -47,7 +47,7 @@ export interface Position {
 }
 
 interface BaseNodeData {
-    laneId?: string | null;
+    participantId?: string | null;
     [key: string]: unknown;
 }
 
@@ -162,12 +162,13 @@ export interface ProcessEdge {
     label?: string | null;
 }
 
-export type LaneActorType = 'human' | 'system' | null;
+export type ParticipantActorType = 'human' | 'system' | null;
 
-export interface ProcessLane {
+export interface ProcessParticipant {
     id: string;
     name: string;
-    actorType: LaneActorType;
+    guard: string;
+    actorType: ParticipantActorType;
     order: number;
     color: string | null;
 }
@@ -186,14 +187,13 @@ export interface ProcessDefinition {
     id: string;
     name: string;
     slug: string;
-    guard?: string;
     description: string | null;
     version: number;
     status: ProcessStatus;
     entryNodeId: string | null;
     nodes: ProcessNode[];
     edges: ProcessEdge[];
-    lanes: ProcessLane[];
+    participants: ProcessParticipant[];
     metadata: ProcessMetadata;
 }
 

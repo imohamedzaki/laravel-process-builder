@@ -25,7 +25,7 @@ final class ProcessDefinitionTest extends TestCase
         $this->assertSame(ProcessStatus::Draft, $process->status);
         $this->assertSame([], $process->nodes);
         $this->assertSame([], $process->edges);
-        $this->assertSame([], $process->lanes);
+        $this->assertSame([], $process->participants);
         $this->assertNotSame('', $process->id);
     }
 
@@ -134,7 +134,7 @@ final class ProcessDefinitionTest extends TestCase
 
         $this->assertSame($process->id, $bumped->id);
         $this->assertSame($process->version + 1, $bumped->version);
-        $this->assertSame($process->lanes, $bumped->lanes);
+        $this->assertSame($process->participants, $bumped->participants);
     }
 
     public function test_it_hydrates_with_no_lanes_key_for_backward_compatibility(): void
@@ -147,7 +147,7 @@ final class ProcessDefinitionTest extends TestCase
             ],
         ]);
 
-        $this->assertSame([], $process->lanes);
+        $this->assertSame([], $process->participants);
     }
 
     public function test_it_hydrates_lanes_and_round_trips_them(): void
@@ -161,16 +161,17 @@ final class ProcessDefinitionTest extends TestCase
             ],
         ]);
 
-        $this->assertCount(2, $process->lanes);
-        $this->assertSame('Manager', $process->laneById('lane_manager')?->name);
-        $this->assertSame('system', $process->laneById('lane_system')?->actorType);
-        $this->assertNull($process->laneById('missing'));
+        $this->assertCount(2, $process->participants);
+        $this->assertSame('Manager', $process->participantById('lane_manager')?->name);
+        $this->assertSame('manager', $process->participantById('lane_manager')?->guard);
+        $this->assertSame('system', $process->participantById('lane_system')?->actorType);
+        $this->assertNull($process->participantById('missing'));
 
         $rehydrated = ProcessDefinition::fromArray($process->toArray());
 
         $this->assertEquals(
-            array_map(static fn ($lane) => $lane->toArray(), $process->lanes),
-            array_map(static fn ($lane) => $lane->toArray(), $rehydrated->lanes),
+            array_map(static fn ($participant) => $participant->toArray(), $process->participants),
+            array_map(static fn ($participant) => $participant->toArray(), $rehydrated->participants),
         );
     }
 

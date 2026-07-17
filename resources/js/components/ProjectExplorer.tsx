@@ -5,7 +5,7 @@ import { useProcessEditorStore } from '@/stores/useProcessEditorStore';
 import { useProjectStore } from '@/stores/useProjectStore';
 import type { HealthResponse } from '@/types/dashboard';
 import type { ProcessDefinition } from '@/types/process';
-import { discoverGuards, processGuard } from '@/utils/guards';
+import { discoverGuards, participantGuards } from '@/utils/guards';
 
 interface ProjectExplorerProps { health?: HealthResponse['data'] | null; onOpenProcesses?: () => void }
 
@@ -22,13 +22,13 @@ export function ProjectExplorer({ health = null, onOpenProcesses }: ProjectExplo
         const search = query.toLowerCase();
         return (method === 'ALL' || route.methods.includes(method)) && (!search || `${route.uri} ${route.name ?? ''} ${route.controller ?? ''}`.toLowerCase().includes(search));
     }) ?? [], [summary, query, method]);
-    const guards = [...new Set([...discoverGuards(summary), ...processes.map(processGuard).filter((item): item is string => Boolean(item))])].sort();
+    const guards = [...new Set([...discoverGuards(summary), ...processes.flatMap(participantGuards)])].sort();
 
     function openProcess(process: ProcessDefinition): void { void load(process.slug); onOpenProcesses?.(); }
 
     return <section className="pb-explorer">
         <header className="pb-page-heading">
-            <div><span className="pb-eyebrow">Application topology</span><h1>Project Explorer</h1><p>Routes, controllers and guard workflows discovered from your Laravel project.</p></div>
+            <div><span className="pb-eyebrow">Application topology</span><h1>Project Explorer</h1><p>Routes, controllers, independent processes, and participant guard mappings discovered from your Laravel project.</p></div>
             <button className="pb-button pb-button--secondary" type="button" onClick={() => void scan()} disabled={isLoading}><Icon name="refresh" />{isLoading ? 'Scanning…' : 'Rescan project'}</button>
         </header>
         {error && <div className="pb-alert" role="alert">{error}</div>}
@@ -47,8 +47,8 @@ export function ProjectExplorer({ health = null, onOpenProcesses }: ProjectExplo
                     <div className="pb-table-wrap"><table className="pb-explorer-table"><thead><tr><th>Method</th><th>Endpoint</th><th>Controller</th><th>Pipeline</th></tr></thead><tbody>{routes.map((route) => <tr key={`${route.methods.join(',')}-${route.uri}`}><td><span className={`pb-method pb-method--${route.methods[0]?.toLowerCase()}`}>{route.methods.join('|')}</span></td><td><strong>{route.uri}</strong><small>{route.name ?? 'Unnamed route'}</small></td><td>{route.controller ? <><span>{route.controller.split('\\').at(-1)}@{route.controllerMethod ?? ''}</span><small>{route.action ?? `${route.controller}@${route.controllerMethod ?? ''}`}</small></> : 'Closure'}</td><td><div className="pb-chip-list">{route.middleware.map((item) => <span className="pb-chip" key={item}>{item}</span>)}</div></td></tr>)}</tbody></table></div>
                 </article>
                 <aside className="pb-panel pb-topology-panel">
-                    <header className="pb-panel-header"><div><h2>Guard topology</h2><span>One workflow per discovered guard</span></div></header>
-                    <div className="pb-guard-list">{guards.map((guard) => { const linked = processes.find((item) => processGuard(item) === guard); return <button type="button" className="pb-guard-card" key={guard} onClick={() => linked ? openProcess(linked) : onOpenProcesses?.()}><span className="pb-guard-icon"><Icon name="shield" /></span><span><strong>{guard}</strong><small>{linked ? linked.name : 'Workflow not configured'}</small></span><span className={`pb-status-pill pb-status-pill--${linked?.status ?? 'empty'}`}>{linked?.status ?? 'available'}</span></button>; })}</div>
+                    <header className="pb-panel-header"><div><h2>Participant guard topology</h2><span>A guard can participate in several independent workflows</span></div></header>
+                    <div className="pb-guard-list">{guards.map((guard) => { const linked = processes.filter((item) => participantGuards(item).includes(guard)); const primary = linked[0]; return <button type="button" className="pb-guard-card" key={guard} onClick={() => primary ? openProcess(primary) : onOpenProcesses?.()}><span className="pb-guard-icon"><Icon name="shield" /></span><span><strong>{guard}</strong><small>{linked.length ? linked.map((item) => item.name).join(' · ') : 'Not mapped to a participant'}</small></span><span className={`pb-status-pill pb-status-pill--${primary?.status ?? 'empty'}`}>{linked.length ? `${linked.length} process${linked.length === 1 ? '' : 'es'}` : 'available'}</span></button>; })}</div>
                     <div className="pb-generation-state"><span><Icon name="code" />Code generation</span><strong>{health?.generationEnabled ? 'Enabled' : 'Read-only'}</strong></div>
                 </aside>
             </div>
