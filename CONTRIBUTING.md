@@ -12,9 +12,10 @@ Thanks for your interest in contributing. This document covers how to set up the
 6. [Quality gate](#quality-gate)
 7. [Commit messages](#commit-messages)
 8. [Submitting a pull request](#submitting-a-pull-request)
-9. [Reporting bugs](#reporting-bugs)
-10. [Reporting security issues](#reporting-security-issues)
-11. [Proposing features](#proposing-features)
+9. [Releasing](#releasing)
+10. [Reporting bugs](#reporting-bugs)
+11. [Reporting security issues](#reporting-security-issues)
+12. [Proposing features](#proposing-features)
 
 ## Code of conduct
 
@@ -111,6 +112,10 @@ Open a [bug report issue](../../issues/new/choose) with:
 - Package version, PHP version, Laravel version.
 - Steps to reproduce, expected vs. actual behavior.
 - Relevant config (`config/process-builder.php` values that differ from defaults) and, if applicable, the process definition JSON that triggers the bug.
+
+## Releasing
+
+Maintainers cutting a new version to Packagist should follow [docs/deployment-pipeline.md](docs/deployment-pipeline.md) — it covers the versioning policy, the release checklist, and the exact tag/push sequence that triggers Packagist.
 
 ## Reporting security issues
 
